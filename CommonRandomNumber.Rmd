@@ -2,7 +2,9 @@
 title: "Applying the common random number technique as a Markov chain convergence diagnostic"
 author: "Sabrina Sixta"
 date: "2023-06-07"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
