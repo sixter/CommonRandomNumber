@@ -341,6 +341,75 @@ df %>%
   geom_line() + labs(title = "Mean |X_n-Y_n|", subtitle = "Using common random number technique") +
   xlab("iteration") + ylab("value")
 ```
+```{r}
+df %>% 
+  filter(sim_no == 1) %>% 
+  pivot_longer(x:y, names_to = "names", values_to = "value") %>%
+  ggplot(aes(x = iter, y = value)) +
+  geom_line(aes(color = names)) + labs(title = "Simulations of X_n and Y_n", subtitle = "Using common random number technique") +
+  xlab("iteration") + ylab("value")
+```
+
+
+```{r}
+df %>% 
+  ggplot(aes(x = iter, y = val)) + 
+  geom_line(aes(color = sim_no)) + labs(title = "Simulations of |X_n - Y_n|", subtitle = "Using common random number technique") +
+  xlab("iteration") + ylab("value") + theme(legend.position = "none")
+```
+
+## Random logistic Map
+
+Define the logistic regression map to be 
+$$X_n = 4\theta_n X_{n-1}(1-X_{n-1}), \theta_n\sim Beta(1.5,0.5)$$
+```{r}
+n <- 25
+X <- 1:n
+Y <- X
+B <- rbeta(n, 1.5, 0.5)
+
+X[1] <- 0.99
+Y[1] <- 0.1
+for(i in 2:n){
+  X[i] <- 4*B[i]*X[i-1]*(1-X[i-1])
+  Y[i] <- 4*B[i]*Y[i-1]*(1-Y[i-1])
+}
+
+df <- data.frame(X,Y, iter=1:n)
+df %>% 
+  pivot_longer(X:Y, names_to = "sim_no", values_to = "val") %>% 
+  ggplot(aes(x = iter, y = val)) + 
+  geom_line(aes(color = sim_no)) + labs(title = "Simulations of X_n and Y_n", subtitle = "Using common random number technique") +
+  xlab("iteration") + ylab("value")
+```
+
+## Dirichlet process
+
+Define the Dirichlet process is
+$$X_n = (1-\theta_n)Z_n+\theta_nX_{n-1}, \theta_n\sim Beta(1.5,1), Z_n\sim N(0,1)$$
+```{r}
+n <- 50
+X <- 1:n
+Y <- X
+B <- rbeta(n, 1.5, 1)
+Z <- rnorm(n, 0, 1)
+
+X[1] <- 10
+Y[1] <- -10
+for(i in 2:n){
+  X[i] <- (1-B[i])*Z[i] + B[i]*X[i-1]
+  Y[i] <- (1-B[i])*Z[i] + B[i]*Y[i-1]
+}
+```
+
+```{r}
+df <- data.frame(X,Y, iter=1:n)
+df %>% 
+  pivot_longer(X:Y, names_to = "sim_no", values_to = "val") %>% 
+  ggplot(aes(x = iter, y = val)) + 
+  geom_line(aes(color = sim_no)) + labs(title = "Simulations of X_n and Y_n", subtitle = "Using common random number technique") +
+  xlab("iteration") + ylab("value")
+```
 
 
 ## Example of the set $A$
@@ -358,3 +427,45 @@ ggplot(data.frame(x=c(0, 2)), aes(x=x)) +
   labs(x="theta", y="value of f")
 ```
 
+## Dirichlet process
+
+Define the Dirichlet process is
+$$X_n = \sin[(1-X_{n-1})\cos(\theta_n)], \theta_n\sim Unif(-\pi/2,3\pi/2)$$
+```{r}
+n <- 100
+X <- 1:n
+Y <- X
+B <- runif(n, -pi/2, 3*pi/2)
+
+X[1] <- 0.75
+Y[1] <- 0.05
+for(i in 2:n){
+  # X[i] <- X[i-1]*cos(B[i])+sin(B[i])
+  # Y[i] <- Y[i-1]*cos(B[i])+sin(B[i])
+    X[i] <- sin((1-abs(X[i-1]))*cos(B[i]))
+  Y[i] <- sin((1-abs(Y[i-1]))*cos(B[i]))
+}
+
+plot(abs(X-Y))
+plot(X)
+plot(Y)
+```
+
+
+```{r}
+df <- data.frame(X,Y, iter=1:n)
+df %>% 
+  pivot_longer(X:Y, names_to = "sim_no", values_to = "val") %>% 
+  ggplot(aes(x = iter, y = val)) + 
+  geom_line(aes(color = sim_no)) + labs(title = "Simulations of X_n and Y_n", subtitle = "Using common random number technique") +
+  xlab("iteration") + ylab("value")
+```
+
+
+```{r}
+ggplot() +
+  xlim(-pi/2, 3*pi/2) +
+  geom_function(aes(colour = "X_0=0.75"), fun = function(x) sin(0.25*cos(x))) +
+  geom_function(aes(colour = "Y_0=0.05"), fun = function(x) sin(0.95*cos(x))) +
+  xlab("theta") + ylab("value of f")
+```
