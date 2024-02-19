@@ -3,8 +3,8 @@ title: "Applying the common random number technique as a Markov chain convergenc
 author: "Sabrina Sixta"
 date: "2023-06-07"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -64,7 +64,7 @@ v_0 <- 1
 c_0 <- 6
 ```
 
-Consistent with equation (16) we define 
+Consistent with equation (18) we define 
 $$g(\beta,\sigma^2) =  \frac{1}{(\sigma^2)^{(n+\upsilon_0)/2+1}}\exp\left(-\frac{1}{2\sigma^2} (y-X\beta)^T(y-X\beta) -\frac{1}{2}(\beta-\beta_0)^T\Sigma_{\beta}^{-1} (\beta-\beta_0) -\frac{\upsilon_0 c_0^2}{\sigma^2}\right)$$
 We further define 
 $$f(\beta,\sigma^2) = \log(g(\beta,\sigma^2))$$
@@ -106,12 +106,12 @@ L
 ```{r}
 alpha <- (n+v_0)/2
 beta <- v_0*c_0/2
-K <- 1/L*gamma(alpha)/beta^alpha
+K <- 1/L*gamma(alpha)/beta^alpha*(2*pi)^(p/2)
 K
-tvbound <- (n+v_0)/(v_0*c_0)
+tvbound <- (n+v_0)^2/(2*v_0*c_0)
 tvbound
 ```
-The following is function that generates $\sigma^2_{n+1}$ given $\sigma^2_n$, equation 7.
+The following is function that generates $\sigma^2_{n+1}$ given $\sigma^2_n$, equation 19.
 
 ```{r}
 b_hat <- inv(t(X) %*% X) %*% t(X) %*%  Y
@@ -124,7 +124,7 @@ nextIt <- function(o, Z, G){
   Vinv <-  Q %*% inv(L) %*% inv(Q)
   b_tilde <- Vinv %*% (t(X) %*% X %*% b_hat/o + inv(E_0) %*% b_0)
   W <- X %*% b_tilde - Y + X %*% Vinv12 %*% Z
-  o1 <- (v_0*c_0/2 +t(W) %*% W/(2*G))
+  o1 <- (v_0*c_0/2 +(t(W) %*% W)/2)/G
   return(o1)
 }
 ```
