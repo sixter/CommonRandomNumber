@@ -3,8 +3,8 @@ title: "Applying the common random number technique as a Markov chain convergenc
 author: "Sabrina Sixta"
 date: "2023-06-07"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -62,6 +62,7 @@ b_0 <- rep(0,4)
 E_0 <- diag(4)
 v_0 <- 1
 c_0 <- 6
+c_0 <- 10
 ```
 
 Consistent with equation (18) we define 
@@ -133,6 +134,7 @@ Now we apply the common random number technique to generate an estimate of $E[X_
 
 ```{r}
 I = 1000
+#I = 100
 J = 100
 diff <- matrix(0, I, J)
 for(i in 1:I){
@@ -162,7 +164,7 @@ diff_df %>%
 ```
 ```{r}
 expdiff <- diff_df %>%
-  filter(iter_no==35) %>%
+  filter(iter_no==25) %>%
   summarise(expdiff = mean(val))
 
 expdiff
@@ -171,9 +173,9 @@ expdiff
 
 ```{r}
 diff_df %>% 
-  filter(iter_no==35) %>% 
+  filter(iter_no==25) %>% 
   ggplot(aes(x=val)) + 
-  geom_histogram(bins = "39") + labs(title = "Histogram of |X_n-Y_n|", subtitle = "At iteration = 35") +
+  geom_histogram(bins = "39") + labs(title = "Histogram of |X_n-Y_n|", subtitle = "At iteration = 25") +
   xlab("|X_n-Y_n|") +
   geom_vline(aes(xintercept = expdiff$expdiff), colour="black")
   #geom_vline(xintercept = expdiff)
@@ -188,18 +190,15 @@ diff_df %>%
   labs(title = "Sample average value of |X_n-Y_n|", subtitle = "Based on 1000 simulations") +
   xlab("iteration") + ylab("diff = E[|X_n-Y_n|]")
 ```
+
 ```{r}
-diff_df %>% 
-  group_by(iter_no) %>% 
-  summarise(mean_val = mean(val)*K) %>% 
-  filter(iter_no==35)
+expdiff*K
 ```
+
 ```{r}
-diff_df %>% 
-  group_by(iter_no) %>% 
-  summarise(mean_val = mean(val)*K*tvbound) %>% 
-  filter(iter_no==35)
+expdiff*K*tvbound
 ```
+
 
 # Autoregressive process
 
