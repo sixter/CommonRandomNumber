@@ -1,0 +1,181 @@
+---
+title: "STA3431 Homework 2 Question 4"
+author: "Sabrina Sixta, 1005919614, sabrina.sixta@mail.utoronto.ca"
+date: "Department of Statistics, 2nd year PhD"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(invgamma)
+library(tidyverse)
+library(dplyr)
+```
+
+# Question 4
+
+The following is the data of interest. The rows represent the batches of which there are 6 in total. Each batch contains 5 elements.
+```{r}
+# Matrix giving the famous "dyestuff" batch data from Davies (1967).
+# Defined so Ydye[i,j] equals yield (in grams) from j'th sample of i'th batch.
+# Valid for i=1,2,3,4,5,6, and j=1,2,3,4,5, i.e. K=6 and J=5.
+
+J <- 5    # number of samples in each batch
+K <- 6    # number of batches
+
+Ydye = t( matrix(
+	c(1545, 1440, 1440, 1520, 1580,
+         1540, 1555, 1490, 1560, 1495,
+         1595, 1550, 1605, 1510, 1560,
+         1445, 1440, 1595, 1465, 1545,
+         1595, 1630, 1515, 1635, 1625,
+         1520, 1455, 1450, 1480, 1445), nrow=5) )
+```
+
+```{r}
+K <- 10
+theta <- rnorm(K,3,100)
+y <- NULL
+for(t in 1:K){
+  y <- c(y,rnorm(1,theta[t], 200))
+}
+Ydye <- t( matrix(y, nrow=K) )
+```
+
+
+
+The following code runs a Gibbs sampler for the model.
+
+```{r}
+gibbs_update_u <- function(X, z = rnorm(1,0,1)){
+  a <- (a3*X[1]+b3*sum(X[4:(3+K)]))/(X[1]+K*b3)
+  b <- sqrt(b3*X[1]/(X[1] + K*b3))
+  X[3] <- a + b*z
+  return(X)
+}
+
+gibbs_update_theta <- function(x, z = rnorm(K,0,1)){
+  a <- (x[3]/x[1]+apply(Ydye, MARGIN = 1, FUN = sum)/x[2])/(1/x[1]+J/x[2])
+  b <- sqrt(1/(1/x[1] + J/x[2]))
+  x[4:(3+K)]  <- a + b * z
+  return(x)
+}
+
+gibbs_update_V <- function(X, g = rgamma(1, shape = a1+K/2, rate = 1)){
+  b <- b1 +sum((X[4:(3+K)]-X[3])^2)/2
+  X[1]  <- 1/(b*g)
+  return(X)
+}
+
+gibbs_update_W <- function(X, g = rgamma(1, shape = a2+K*J/2, rate = 1)){
+  b <- b2 +sum((Ydye-X[4:(3+K)])^2)/2
+  X[2]  <- 1/(b*g)
+  return(X)
+}
+```
+```{r}
+M <- 100
+X <- c(1,1,0,rep(0,K))
+Y <- c(10000,10000,10000,rep(10000,K))
+
+# df_X <- data.frame(V = X[1], W=X[2], mu=X[3], theta1=X[4], theta2=X[5], theta3=X[6], theta4=X[7], theta5=X[8], theta6=X[9], coord = 0, iter = 0)
+# df_Y <- data.frame(V = Y[1], W=Y[2], mu=Y[3], theta1=Y[4], theta2=Y[5], theta3=Y[6], theta4=Y[7], theta5=Y[8], theta6=Y[9], coord = 0, iter = 0)
+
+df_X <- data.frame(t(c(X,0,0)))
+df_Y <- data.frame(t(c(Y,0,0)))
+colnames(df_X) <- c("V","W","mu",paste("theta",1:K, sep=""),"coord","iter")
+colnames(df_Y) <- c("V","W","mu",paste("theta",1:K, sep=""),"coord","iter")
+
+par <- c(6000, 6000, 6000, 6000, 1600, 1600)
+a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+  
+for (i in 1:M) {
+    for (coord in 1:4){
+      if (coord == 3) { # Modify coordinate u
+        z = rnorm(1,0,1)
+        X <- gibbs_update_u(X, z)
+        Y <- gibbs_update_u(Y, z)
+      }
+      else if (coord == 4) { # Modify all K thetas
+        z = rnorm(K,0,1)
+        X <- gibbs_update_theta(X, z)
+        Y <- gibbs_update_theta(Y, z)
+      }
+      else if (coord == 1) { # Modify coordinate V
+        g = rgamma(1, shape = a1+K/2, rate = 1)
+        X <- gibbs_update_V(X, g)
+        Y <- gibbs_update_V(Y, g)
+      }
+      else if (coord == 2) { # Modify coordinate W
+        g = rgamma(1, shape = a2+K*J/2, rate = 1)
+        X <- gibbs_update_W(X,g)
+        Y <- gibbs_update_W(Y,g)
+      }
+      df_X <- rbind(df_X,c(X, coord, i))
+      df_Y <- rbind(df_Y,c(Y, coord, i))
+    }
+}
+```
+
+```{r}
+df_X
+```
+```{r}
+df
+```
+
+
+```{r}
+df_X <- df_X %>% pivot_longer(cols = V:theta10, names_to = "names", values_to = "X")
+df_Y <- df_Y %>% pivot_longer(cols = V:theta10, names_to = "names", values_to = "Y")
+
+df <- left_join(df_X, df_Y, by=c('coord','iter','names'))
+df <- df %>% mutate(diff = X-V)
+
+df_diff <- df %>% 
+  filter(coord ==1) %>% 
+  group_by(iter) %>% 
+  summarise(diff = sum(abs(diff)))
+
+df_diff
+```
+```{r}
+df_diff %>% 
+  ggplot(aes(x = iter, y = diff)) + 
+  geom_line() + labs(title = "Simulations", subtitle = "Using common random number technique") +
+  xlab("iteration") + ylab("value")
+```
+```{r}
+df %>% 
+  pivot_longer(value_x:value_y, names_to = 'sim', values_to = 'val') %>% 
+  filter(iter>1, coord==1, sim=='value_x', names=="mu")  %>% 
+  ggplot(aes(x = iter, y = val)) +
+  geom_line() + labs(title = "Simulations") +
+  xlab("iteration") + ylab("value")
+```
+```{r}
+df %>% 
+  filter(names=='mu', coord=='1')
+```
+
+```{r}
+df %>% 
+  filter(iter>1, coord==1) %>% 
+  ggplot(aes(x = iter, y = value_x)) + 
+  geom_line(aes(color = sim)) + labs(title = "Simulations", subtitle = "Using common random number technique") +
+  xlab("iteration") + ylab("value")
+```
+```{r}
+df %>%
+  pivot_longer(V:theta6, names_to = "coordinate", values_to = "value") %>%
+  ggplot(aes(iteration, value)) +
+  geom_line() +
+  facet_wrap(~ coordinate, scales = "free") +
+  labs(title = "Traceplot by Coordinate of the Random Walk Metropolis Hastings Algorithm")
+```
+```{r}
+df_X
+```
+
