@@ -1,0 +1,1094 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={VarComp},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{VarComp}
+\author{}
+\date{\vspace{-2.5em}2025-04-29}
+
+\begin{document}
+\maketitle
+
+\#Variance Component Model Gibbs Sampler
+
+The following is the data of interest. The rows represent the batches of
+which there are 6 in total. Each batch contains 5 elements.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Matrix giving the famous "dyestuff" batch data from Davies (1967).}
+\CommentTok{\# Defined so Ydye[i,j] equals yield (in grams) from j\textquotesingle{}th sample of i\textquotesingle{}th batch.}
+\CommentTok{\# Valid for i=1,2,3,4,5,6, and j=1,2,3,4,5, i.e. I=6 and J=5.}
+
+\NormalTok{Ydye }\OtherTok{=} \FunctionTok{t}\NormalTok{( }\FunctionTok{matrix}\NormalTok{(}
+    \FunctionTok{c}\NormalTok{(}\DecValTok{1545}\NormalTok{, }\DecValTok{1440}\NormalTok{, }\DecValTok{1440}\NormalTok{, }\DecValTok{1520}\NormalTok{, }\DecValTok{1580}\NormalTok{,}
+         \DecValTok{1540}\NormalTok{, }\DecValTok{1555}\NormalTok{, }\DecValTok{1490}\NormalTok{, }\DecValTok{1560}\NormalTok{, }\DecValTok{1495}\NormalTok{,}
+         \DecValTok{1595}\NormalTok{, }\DecValTok{1550}\NormalTok{, }\DecValTok{1605}\NormalTok{, }\DecValTok{1510}\NormalTok{, }\DecValTok{1560}\NormalTok{,}
+         \DecValTok{1445}\NormalTok{, }\DecValTok{1440}\NormalTok{, }\DecValTok{1595}\NormalTok{, }\DecValTok{1465}\NormalTok{, }\DecValTok{1545}\NormalTok{,}
+         \DecValTok{1595}\NormalTok{, }\DecValTok{1630}\NormalTok{, }\DecValTok{1515}\NormalTok{, }\DecValTok{1635}\NormalTok{, }\DecValTok{1625}\NormalTok{,}
+         \DecValTok{1520}\NormalTok{, }\DecValTok{1455}\NormalTok{, }\DecValTok{1450}\NormalTok{, }\DecValTok{1480}\NormalTok{, }\DecValTok{1445}\NormalTok{), }\AttributeTok{nrow=}\DecValTok{5}\NormalTok{) )}
+
+\NormalTok{J }\OtherTok{\textless{}{-}} \FunctionTok{dim}\NormalTok{(Ydye)[}\DecValTok{2}\NormalTok{] }\CommentTok{\# number of samples in each batch}
+\NormalTok{I }\OtherTok{\textless{}{-}} \FunctionTok{dim}\NormalTok{(Ydye)[}\DecValTok{1}\NormalTok{] }\CommentTok{\# number of batches}
+\end{Highlighting}
+\end{Shaded}
+
+The following code runs a Gibbs sampler for the model.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{gibbs\_update\_u }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{z =} \FunctionTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{))\{}
+\NormalTok{  a }\OtherTok{\textless{}{-}}\NormalTok{ (a3}\SpecialCharTok{*}\NormalTok{x[}\DecValTok{1}\NormalTok{]}\SpecialCharTok{+}\NormalTok{b3}\SpecialCharTok{*}\FunctionTok{sum}\NormalTok{(x[}\DecValTok{4}\SpecialCharTok{:}\NormalTok{(}\DecValTok{3}\SpecialCharTok{+}\NormalTok{I)]))}\SpecialCharTok{/}\NormalTok{(x[}\DecValTok{1}\NormalTok{]}\SpecialCharTok{+}\NormalTok{I}\SpecialCharTok{*}\NormalTok{b3)}
+\NormalTok{  b }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(b3}\SpecialCharTok{*}\NormalTok{x[}\DecValTok{1}\NormalTok{]}\SpecialCharTok{/}\NormalTok{(x[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{+}\NormalTok{ I}\SpecialCharTok{*}\NormalTok{b3))}
+\NormalTok{  x[}\DecValTok{3}\NormalTok{] }\OtherTok{\textless{}{-}}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b}\SpecialCharTok{*}\NormalTok{z}
+  \FunctionTok{return}\NormalTok{(x)}
+\NormalTok{\}}
+
+\NormalTok{gibbs\_update\_theta }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{z =} \FunctionTok{rnorm}\NormalTok{(I,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{))\{}
+\NormalTok{  a }\OtherTok{\textless{}{-}}\NormalTok{ (x[}\DecValTok{3}\NormalTok{]}\SpecialCharTok{/}\NormalTok{x[}\DecValTok{1}\NormalTok{]}\SpecialCharTok{+}\FunctionTok{apply}\NormalTok{(Ydye, }\AttributeTok{MARGIN =} \DecValTok{1}\NormalTok{, }\AttributeTok{FUN =}\NormalTok{ sum)}\SpecialCharTok{/}\NormalTok{x[}\DecValTok{2}\NormalTok{])}\SpecialCharTok{/}\NormalTok{(}\DecValTok{1}\SpecialCharTok{/}\NormalTok{x[}\DecValTok{1}\NormalTok{]}\SpecialCharTok{+}\NormalTok{J}\SpecialCharTok{/}\NormalTok{x[}\DecValTok{2}\NormalTok{])}
+\NormalTok{  b }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\DecValTok{1}\SpecialCharTok{/}\NormalTok{(}\DecValTok{1}\SpecialCharTok{/}\NormalTok{x[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{+}\NormalTok{ J}\SpecialCharTok{/}\NormalTok{x[}\DecValTok{2}\NormalTok{]))}
+\NormalTok{  b }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(x[}\DecValTok{1}\NormalTok{]}\SpecialCharTok{*}\NormalTok{x[}\DecValTok{2}\NormalTok{]}\SpecialCharTok{/}\NormalTok{(x[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{+}\NormalTok{ J}\SpecialCharTok{*}\NormalTok{x[}\DecValTok{1}\NormalTok{]))}
+\NormalTok{  x[}\DecValTok{4}\SpecialCharTok{:}\NormalTok{(}\DecValTok{3}\SpecialCharTok{+}\NormalTok{I)]  }\OtherTok{\textless{}{-}}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b }\SpecialCharTok{*}\NormalTok{ z}
+  \FunctionTok{return}\NormalTok{(x)}
+\NormalTok{\}}
+
+\NormalTok{gibbs\_update\_V }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{g =} \FunctionTok{rgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{shape =}\NormalTok{ a1}\SpecialCharTok{+}\NormalTok{I}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{rate =} \DecValTok{1}\NormalTok{))\{}
+\NormalTok{  b }\OtherTok{\textless{}{-}}\NormalTok{ b1 }\SpecialCharTok{+}\FunctionTok{sum}\NormalTok{((x[}\DecValTok{4}\SpecialCharTok{:}\NormalTok{(}\DecValTok{3}\SpecialCharTok{+}\NormalTok{I)]}\SpecialCharTok{{-}}\NormalTok{x[}\DecValTok{3}\NormalTok{])}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\DecValTok{2}
+\NormalTok{  x[}\DecValTok{1}\NormalTok{]  }\OtherTok{\textless{}{-}}\NormalTok{ b}\SpecialCharTok{/}\NormalTok{g}
+  \FunctionTok{return}\NormalTok{(x)}
+\NormalTok{\}}
+
+\NormalTok{gibbs\_update\_W }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{g =} \FunctionTok{rgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{shape =}\NormalTok{ a2}\SpecialCharTok{+}\NormalTok{I}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{rate =} \DecValTok{1}\NormalTok{))\{}
+\NormalTok{  b }\OtherTok{\textless{}{-}}\NormalTok{ b2 }\SpecialCharTok{+}\FunctionTok{sum}\NormalTok{((Ydye}\SpecialCharTok{{-}}\NormalTok{x[}\DecValTok{4}\SpecialCharTok{:}\NormalTok{(}\DecValTok{3}\SpecialCharTok{+}\NormalTok{I)])}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\DecValTok{2}
+\NormalTok{  x[}\DecValTok{2}\NormalTok{]  }\OtherTok{\textless{}{-}}\NormalTok{ b}\SpecialCharTok{/}\NormalTok{g}
+  \FunctionTok{return}\NormalTok{(x)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Generate the initial value of \(Y_0\sim \nu\)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{par }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{6}\NormalTok{, }\DecValTok{6}\NormalTok{, }\DecValTok{6}\NormalTok{, }\DecValTok{6}\NormalTok{, }\DecValTok{1600}\NormalTok{, }\DecValTok{1600}\NormalTok{)}
+
+\NormalTok{a1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{1}\NormalTok{]; b1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{2}\NormalTok{]; a2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{3}\NormalTok{]; b2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{4}\NormalTok{]; a3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{5}\NormalTok{]; b3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{6}\NormalTok{];}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# M \textless{}{-} 10000 \# number of iterations }
+\CommentTok{\# }
+\CommentTok{\# X \textless{}{-} c(100,200,900,rep(900,I))}
+\CommentTok{\# X\_init \textless{}{-} X}
+\CommentTok{\# }
+\CommentTok{\# V \textless{}{-} rinvgamma(1, a1, b1{-}1)}
+\CommentTok{\# W \textless{}{-} rinvgamma(1, a2, b2{-}1)}
+\CommentTok{\# u \textless{}{-} rnorm(1, a3, sqrt(b3))}
+\CommentTok{\# theta \textless{}{-} rnorm(I, apply(Ydye,2,mean), W/J)}
+\CommentTok{\# Y \textless{}{-} c(V[1], W[1], u[1], theta)}
+\CommentTok{\# Y\_init \textless{}{-} Y}
+\CommentTok{\# }
+\CommentTok{\# df\_X \textless{}{-} data.frame(t(c(X,0,0)))}
+\CommentTok{\# df\_Y \textless{}{-} data.frame(t(c(Y,0,0)))}
+\CommentTok{\# colnames(df\_X) \textless{}{-} c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")}
+\CommentTok{\# colnames(df\_Y) \textless{}{-} c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")}
+\CommentTok{\# }
+\CommentTok{\# \#a1 \textless{}{-} par[1]; b1 \textless{}{-} par[2]; a2 \textless{}{-} par[3]; b2 \textless{}{-} par[4]; a3 \textless{}{-} par[5]; b3 \textless{}{-} par[6];}
+\CommentTok{\#   }
+\CommentTok{\# for (i in 1:M) \{}
+\CommentTok{\#     for (coord in 1:4)\{}
+\CommentTok{\#       if (coord == 3) \{ \# Modify coordinate u}
+\CommentTok{\#         z = rnorm(1,0,1)}
+\CommentTok{\#         X \textless{}{-} gibbs\_update\_u(X, z)}
+\CommentTok{\#         Y \textless{}{-} gibbs\_update\_u(Y, z)}
+\CommentTok{\#       \}}
+\CommentTok{\#       else if (coord == 4) \{ \# Modify all K thetas}
+\CommentTok{\#         z = rnorm(I,0,1)}
+\CommentTok{\#         X \textless{}{-} gibbs\_update\_theta(X, z)}
+\CommentTok{\#         Y \textless{}{-} gibbs\_update\_theta(Y, z)}
+\CommentTok{\#       \}}
+\CommentTok{\#       else if (coord == 1) \{ \# Modify coordinate V}
+\CommentTok{\#         g = rgamma(1, shape = a1+I/2, rate = 1)}
+\CommentTok{\#         X \textless{}{-} gibbs\_update\_V(X, g)}
+\CommentTok{\#         Y \textless{}{-} gibbs\_update\_V(Y, g)}
+\CommentTok{\#       \}}
+\CommentTok{\#       else if (coord == 2) \{ \# Modify coordinate W}
+\CommentTok{\#         g = rgamma(1, shape = a2+I*J/2, rate = 1)}
+\CommentTok{\#         X \textless{}{-} gibbs\_update\_W(X,g)}
+\CommentTok{\#         Y \textless{}{-} gibbs\_update\_W(Y,g)}
+\CommentTok{\#       \}}
+\CommentTok{\#       df\_X \textless{}{-} rbind(df\_X,c(X, coord, i))}
+\CommentTok{\#       df\_Y \textless{}{-} rbind(df\_Y,c(Y, coord, i))}
+\CommentTok{\#     \}}
+\CommentTok{\# \}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# save(df\_X, file = "df\_X\_VarComp.RData")}
+\CommentTok{\# save(df\_Y, file = "df\_Y\_VarComp.RData")}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{load}\NormalTok{(}\StringTok{\textquotesingle{}df\_X\_VarComp.RData\textquotesingle{}}\NormalTok{)}
+\FunctionTok{load}\NormalTok{(}\StringTok{\textquotesingle{}df\_Y\_VarComp.RData\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{9000}\NormalTok{, coord}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ theta1)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title=}\StringTok{"theta1"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{9000}\NormalTok{, coord}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ mu)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title=}\StringTok{"mu"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-7-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{9000}\NormalTok{, coord}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ V)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title=}\StringTok{"V"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-7-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{9000}\NormalTok{, coord}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ W)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title=}\StringTok{"W"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-7-4.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{25}\NormalTok{, coord}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ theta1)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title=}\StringTok{"theta1"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{25}\NormalTok{, coord}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ mu)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title=}\StringTok{"mu"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-8-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{25}\NormalTok{, coord}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ V)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title=}\StringTok{"V"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-8-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{25}\NormalTok{, coord}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ W)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title=}\StringTok{"W"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-8-4.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_X1 }\OtherTok{\textless{}{-}}\NormalTok{ df\_X }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =}\NormalTok{ V}\SpecialCharTok{:}\NormalTok{theta6, }\AttributeTok{names\_to =} \StringTok{"names"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"X"}\NormalTok{)}
+\NormalTok{df\_Y1 }\OtherTok{\textless{}{-}}\NormalTok{ df\_Y }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =}\NormalTok{ V}\SpecialCharTok{:}\NormalTok{theta6, }\AttributeTok{names\_to =} \StringTok{"names"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"Y"}\NormalTok{)}
+
+\NormalTok{df }\OtherTok{\textless{}{-}} \FunctionTok{left\_join}\NormalTok{(df\_X1, df\_Y1, }\AttributeTok{by=}\FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}coord\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}iter\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}names\textquotesingle{}}\NormalTok{))}
+\NormalTok{df }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{diff =}\NormalTok{ X}\SpecialCharTok{{-}}\NormalTok{Y)}
+
+\NormalTok{df\_diff }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(coord }\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{diff =} \FunctionTok{sum}\NormalTok{(}\FunctionTok{abs}\NormalTok{(diff)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_diff }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter, }\AttributeTok{y =}\NormalTok{ diff)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Value of |X{-}Y|"}\NormalTok{, }\AttributeTok{subtitle =} \StringTok{"Using common random number technique"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{xlab}\NormalTok{(}\StringTok{"iteration"}\NormalTok{) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\StringTok{"value"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-10-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#par \textless{}{-} c(6, 6, 6, 6, 1600, 1600)}
+
+\NormalTok{simVCM }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{()\{}
+\NormalTok{  a1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{1}\NormalTok{]; b1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{2}\NormalTok{]; a2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{3}\NormalTok{]; b2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{4}\NormalTok{]; a3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{5}\NormalTok{]; b3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{6}\NormalTok{];}
+  
+\NormalTok{  V }\OtherTok{\textless{}{-}} \FunctionTok{rinvgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, a1, b1}\DecValTok{{-}1}\NormalTok{)}
+\NormalTok{  W }\OtherTok{\textless{}{-}} \FunctionTok{rinvgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, a2, b2}\DecValTok{{-}1}\NormalTok{)}
+\NormalTok{  u }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{, a3, }\FunctionTok{sqrt}\NormalTok{(b3))}
+\NormalTok{  theta }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{(I, }\FunctionTok{apply}\NormalTok{(Ydye,}\DecValTok{2}\NormalTok{,mean), W}\SpecialCharTok{/}\NormalTok{J)}
+\NormalTok{  Y }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(V[}\DecValTok{1}\NormalTok{], W[}\DecValTok{1}\NormalTok{], u[}\DecValTok{1}\NormalTok{], theta)}
+\NormalTok{  Y\_init }\OtherTok{\textless{}{-}}\NormalTok{ Y}
+
+\NormalTok{  M }\OtherTok{\textless{}{-}} \DecValTok{10000}
+\NormalTok{  X }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{100}\NormalTok{,}\DecValTok{200}\NormalTok{,}\DecValTok{900}\NormalTok{,}\FunctionTok{rep}\NormalTok{(}\DecValTok{900}\NormalTok{,I))}
+\NormalTok{  X\_init }\OtherTok{\textless{}{-}}\NormalTok{ X}
+  
+\NormalTok{  df\_X }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\FunctionTok{t}\NormalTok{(}\FunctionTok{c}\NormalTok{(X,}\DecValTok{0}\NormalTok{,}\DecValTok{0}\NormalTok{)))}
+\NormalTok{  df\_Y }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\FunctionTok{t}\NormalTok{(}\FunctionTok{c}\NormalTok{(Y,}\DecValTok{0}\NormalTok{,}\DecValTok{0}\NormalTok{)))}
+  \FunctionTok{colnames}\NormalTok{(df\_X) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"V"}\NormalTok{,}\StringTok{"W"}\NormalTok{,}\StringTok{"mu"}\NormalTok{,}\FunctionTok{paste}\NormalTok{(}\StringTok{"theta"}\NormalTok{,}\DecValTok{1}\SpecialCharTok{:}\NormalTok{I, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),}\StringTok{"coord"}\NormalTok{,}\StringTok{"iter"}\NormalTok{)}
+  \FunctionTok{colnames}\NormalTok{(df\_Y) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"V"}\NormalTok{,}\StringTok{"W"}\NormalTok{,}\StringTok{"mu"}\NormalTok{,}\FunctionTok{paste}\NormalTok{(}\StringTok{"theta"}\NormalTok{,}\DecValTok{1}\SpecialCharTok{:}\NormalTok{I, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),}\StringTok{"coord"}\NormalTok{,}\StringTok{"iter"}\NormalTok{)}
+  
+\NormalTok{  a1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{1}\NormalTok{]; b1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{2}\NormalTok{]; a2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{3}\NormalTok{]; b2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{4}\NormalTok{]; a3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{5}\NormalTok{]; b3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{6}\NormalTok{];}
+    
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{M) \{}
+      \ControlFlowTok{for}\NormalTok{ (coord }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{)\{}
+        \ControlFlowTok{if}\NormalTok{ (coord }\SpecialCharTok{==} \DecValTok{3}\NormalTok{) \{ }\CommentTok{\# Modify coordinate u}
+\NormalTok{          z }\OtherTok{=} \FunctionTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{)}
+\NormalTok{          X }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_u}\NormalTok{(X, z)}
+\NormalTok{          Y }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_u}\NormalTok{(Y, z)}
+\NormalTok{        \}}
+        \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (coord }\SpecialCharTok{==} \DecValTok{4}\NormalTok{) \{ }\CommentTok{\# Modify all I thetas}
+\NormalTok{          z }\OtherTok{=} \FunctionTok{rnorm}\NormalTok{(I,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{)}
+\NormalTok{          X }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_theta}\NormalTok{(X, z)}
+\NormalTok{          Y }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_theta}\NormalTok{(Y, z)}
+\NormalTok{        \}}
+        \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (coord }\SpecialCharTok{==} \DecValTok{1}\NormalTok{) \{ }\CommentTok{\# Modify coordinate V}
+\NormalTok{          g }\OtherTok{=} \FunctionTok{rgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{shape =}\NormalTok{ a1}\SpecialCharTok{+}\NormalTok{I}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{rate =} \DecValTok{1}\NormalTok{)}
+\NormalTok{          X }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_V}\NormalTok{(X, g)}
+\NormalTok{          Y }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_V}\NormalTok{(Y, g)}
+\NormalTok{        \}}
+        \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (coord }\SpecialCharTok{==} \DecValTok{2}\NormalTok{) \{ }\CommentTok{\# Modify coordinate W}
+\NormalTok{          g }\OtherTok{=} \FunctionTok{rgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{shape =}\NormalTok{ a2}\SpecialCharTok{+}\NormalTok{I}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{rate =} \DecValTok{1}\NormalTok{)}
+\NormalTok{          X }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_W}\NormalTok{(X,g)}
+\NormalTok{          Y }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_W}\NormalTok{(Y,g)}
+\NormalTok{        \}}
+\NormalTok{        df\_X }\OtherTok{\textless{}{-}} \FunctionTok{rbind}\NormalTok{(df\_X,}\FunctionTok{c}\NormalTok{(X, coord, i))}
+\NormalTok{        df\_Y }\OtherTok{\textless{}{-}} \FunctionTok{rbind}\NormalTok{(df\_Y,}\FunctionTok{c}\NormalTok{(Y, coord, i))}
+\NormalTok{      \}}
+\NormalTok{  \}}
+
+\NormalTok{  df\_X1 }\OtherTok{\textless{}{-}}\NormalTok{ df\_X }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =}\NormalTok{ V}\SpecialCharTok{:}\NormalTok{theta6, }\AttributeTok{names\_to =} \StringTok{"names"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"X"}\NormalTok{)}
+\NormalTok{  df\_Y1 }\OtherTok{\textless{}{-}}\NormalTok{ df\_Y }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =}\NormalTok{ V}\SpecialCharTok{:}\NormalTok{theta6, }\AttributeTok{names\_to =} \StringTok{"names"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"Y"}\NormalTok{)}
+  
+\NormalTok{  df }\OtherTok{\textless{}{-}} \FunctionTok{left\_join}\NormalTok{(df\_X1, df\_Y1, }\AttributeTok{by=}\FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}coord\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}iter\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}names\textquotesingle{}}\NormalTok{))}
+\NormalTok{  df }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{diff =}\NormalTok{ X}\SpecialCharTok{{-}}\NormalTok{Y)}
+  
+\NormalTok{  df\_diff }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{filter}\NormalTok{(coord }\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{summarise}\NormalTok{(}\AttributeTok{diff =} \FunctionTok{sum}\NormalTok{(}\FunctionTok{abs}\NormalTok{(diff)))}
+  \FunctionTok{return}\NormalTok{(df\_diff)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# df\_diff1 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff2 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff3 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff4 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff5 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff6 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff7 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff8 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff9 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff10 \textless{}{-} simVCM()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# df\_diff11 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff12 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff13 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff14 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff15 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff16 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff17 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff18 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff19 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff20 \textless{}{-} simVCM()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# df\_diff1 \textless{}{-} df\_diff1 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}1\textquotesingle{})}
+\CommentTok{\# df\_diff2 \textless{}{-} df\_diff2 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}2\textquotesingle{})}
+\CommentTok{\# df\_diff3 \textless{}{-} df\_diff3 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}3\textquotesingle{})}
+\CommentTok{\# df\_diff4 \textless{}{-} df\_diff4 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}4\textquotesingle{})}
+\CommentTok{\# df\_diff5 \textless{}{-} df\_diff5 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}5\textquotesingle{})}
+\CommentTok{\# df\_diff6 \textless{}{-} df\_diff6 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}6\textquotesingle{})}
+\CommentTok{\# df\_diff7 \textless{}{-} df\_diff7 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}7\textquotesingle{})}
+\CommentTok{\# df\_diff8 \textless{}{-} df\_diff8 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}8\textquotesingle{})}
+\CommentTok{\# df\_diff9 \textless{}{-} df\_diff9 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}9\textquotesingle{})}
+\CommentTok{\# df\_diff10 \textless{}{-} df\_diff10 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}10\textquotesingle{})}
+\CommentTok{\# }
+\CommentTok{\# df\_diff11 \textless{}{-} df\_diff11 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}11\textquotesingle{})}
+\CommentTok{\# df\_diff12 \textless{}{-} df\_diff12 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}12\textquotesingle{})}
+\CommentTok{\# df\_diff13 \textless{}{-} df\_diff13 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}13\textquotesingle{})}
+\CommentTok{\# df\_diff14 \textless{}{-} df\_diff14 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}14\textquotesingle{})}
+\CommentTok{\# df\_diff15 \textless{}{-} df\_diff15 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}15\textquotesingle{})}
+\CommentTok{\# df\_diff16 \textless{}{-} df\_diff16 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}16\textquotesingle{})}
+\CommentTok{\# df\_diff17 \textless{}{-} df\_diff17 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}17\textquotesingle{})}
+\CommentTok{\# df\_diff18 \textless{}{-} df\_diff18 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}18\textquotesingle{})}
+\CommentTok{\# df\_diff19 \textless{}{-} df\_diff19 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}19\textquotesingle{})}
+\CommentTok{\# df\_diff20 \textless{}{-} df\_diff20 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}20\textquotesingle{})}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# df\_diff\_all \textless{}{-} rbind(df\_diff1, df\_diff2, df\_diff3, df\_diff4, df\_diff5, df\_diff6, df\_diff7, df\_diff8, df\_diff9, df\_diff10, df\_diff11, df\_diff12, df\_diff13, df\_diff14, df\_diff15, df\_diff16, df\_diff17, df\_diff1, df\_diff19, df\_diff20)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# save(df\_diff\_all, file = "df\_diff\_all\_VarComp.RData")}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{load}\NormalTok{(}\StringTok{\textquotesingle{}df\_diff\_all\_VarComp.RData\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_diff\_all }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{mean\_diff =} \FunctionTok{mean}\NormalTok{(diff), }\AttributeTok{min\_diff =}  \FunctionTok{min}\NormalTok{(diff), }\AttributeTok{max\_diff =} \FunctionTok{max}\NormalTok{(diff)) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ min\_diff, }\AttributeTok{ymax =}\NormalTok{ max\_diff), }\AttributeTok{fill =} \StringTok{\textquotesingle{}grey\textquotesingle{}}\NormalTok{, }\AttributeTok{alpha=}\FloatTok{0.5}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ mean\_diff)) }\SpecialCharTok{+}
+  \FunctionTok{theme\_bw}\NormalTok{() }\SpecialCharTok{+}
+  \CommentTok{\#labs(title = TeX("Value of $||X\_n{-}X\textquotesingle{}\_n||\_1$"), subtitle = "Using common random number technique") +}
+  \FunctionTok{xlab}\NormalTok{(}\FunctionTok{TeX}\NormalTok{(}\StringTok{"n=iteration"}\NormalTok{)) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\FunctionTok{TeX}\NormalTok{(}\StringTok{"$||X\_n{-}X\textquotesingle{}\_n||\_1$"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-18-1.pdf}
+
+Calculate \(K\) for the variance component model.
+
+\subsection{\texorpdfstring{Find the constant \(K\) from theorem
+4.4}{Find the constant K from theorem 4.4}}\label{find-the-constant-k-from-theorem-4.4}
+
+We want to find the constant \(K\) that will bound the distance between
+\(X_n\) and the corresponding stationary distribution. We will do so, by
+making use of equation 15, which writes that for an
+\(L\leq \int_{\mathcal{X}} f(\vec{\theta}, v, w, \mu) dx\),
+
+\[K\leq \frac{1}{L}\sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)}\]
+
+Step 1: Find an upper bound on \(f/\nu\)
+
+Based on our calculations, the supremum of
+\(\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)}\) is
+bounded as follows for
+\[C=\frac{1}{(2\pi)^{\sum_{i=1}^K J_i/2}} \frac{1}{(\prod_{i=1}^{K} J_i)^{1/2}}\],
+
+\begin{align*}
+    \sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)} &\leq C \left(\frac{1}{V^{K/2}}e^{-\frac{1}{2V}}\right)
+    \left( \frac{1}{W^{(\sum_{i=1}^K J_i-K)/2}}e^{-\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{2W}} \right) \\
+    &= C \frac{\Gamma(K/2-1)}{0.5^{K/2+1}}\left(\frac{0.5^{K/2+1}}{\Gamma(K/2-1)}\frac{1}{V^{K/2}}e^{-\frac{1}{2V}}\right)
+    \frac{\Gamma(a_W)}{b_W^{a_w}}\left( \frac{b_W^{a_w}}{\Gamma(a_W)} \frac{1}{W^{a_w+1}}e^{-\frac{b_W}{W}} \right) \\
+\end{align*}
+
+Where \[a_W = (\sum_{i=1}^K J_i-K)/2 -1\] and
+\[b_W=\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{2}\]
+
+Since both of the functions for \(V\) and \(W\) are inverse gamma, the
+supremum occurs when \(V^*=\frac{1}{2}\frac{1}{K/2-1}=\frac{1}{K-2}\)
+and
+\(W^* = \frac{b_W}{a_W+1}=\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{\sum_{i=1}^K J_i-K}\).
+So that,
+
+\begin{align*}
+    \sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)} &\leq C \frac{\Gamma(K/2-1)}{0.5^{K/2+1}}\left(\frac{0.5^{K/2+1}}{\Gamma(K/2-1)}\frac{1}{(V^*)^{K/2}}e^{-\frac{1}{2V^*}}\right)
+    \frac{\Gamma(a_W)}{b_W^{a_w}}\left( \frac{b_W^{a_w}}{\Gamma(a_W)} \frac{1}{(W^*)^{a_w+1}}e^{-\frac{b_W}{W^*}} \right) \\
+\end{align*}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{a\_w }\OtherTok{\textless{}{-}}\NormalTok{ I}\SpecialCharTok{*}\NormalTok{(J}\DecValTok{{-}1}\NormalTok{)}\SpecialCharTok{/}\DecValTok{2{-}1}
+\NormalTok{b\_w }\OtherTok{\textless{}{-}} \DecValTok{1}
+\NormalTok{a\_v }\OtherTok{\textless{}{-}}\NormalTok{ I}\SpecialCharTok{/}\DecValTok{2{-}1}
+\NormalTok{b\_v }\OtherTok{\textless{}{-}} \DecValTok{1}
+
+\NormalTok{V\_star }\OtherTok{\textless{}{-}}\NormalTok{ b\_v}\SpecialCharTok{/}\NormalTok{(a\_v}\SpecialCharTok{+}\DecValTok{1}\NormalTok{)}
+\NormalTok{W\_star }\OtherTok{\textless{}{-}}\NormalTok{ b\_w}\SpecialCharTok{/}\NormalTok{(a\_w}\SpecialCharTok{+}\DecValTok{1}\NormalTok{)}
+
+\NormalTok{C }\OtherTok{\textless{}{-}}\NormalTok{ (b1}\SpecialCharTok{/}\NormalTok{(b1}\DecValTok{{-}1}\NormalTok{))}\SpecialCharTok{\^{}}\NormalTok{a1}\SpecialCharTok{*}\NormalTok{(b2}\SpecialCharTok{/}\NormalTok{(b2}\DecValTok{{-}1}\NormalTok{))}\SpecialCharTok{\^{}}\NormalTok{a2}\SpecialCharTok{*}\DecValTok{1}\SpecialCharTok{/}\NormalTok{((}\DecValTok{2}\SpecialCharTok{*}\NormalTok{pi)}\SpecialCharTok{\^{}}\NormalTok{(I}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{/}\DecValTok{2}\NormalTok{)}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{\^{}}\NormalTok{(}\DecValTok{1}\SpecialCharTok{/}\DecValTok{2}\NormalTok{))}
+
+\NormalTok{sup\_ratio }\OtherTok{\textless{}{-}}\NormalTok{ C}\SpecialCharTok{*}\FunctionTok{gamma}\NormalTok{(a\_v)}\SpecialCharTok{/}\NormalTok{(b\_v}\SpecialCharTok{\^{}}\NormalTok{a\_v)}\SpecialCharTok{*}\FunctionTok{dinvgamma}\NormalTok{(V\_star,a\_v,b\_v)}\SpecialCharTok{*}
+  \FunctionTok{gamma}\NormalTok{(a\_w)}\SpecialCharTok{/}\NormalTok{(b\_w}\SpecialCharTok{\^{}}\NormalTok{a\_w)}\SpecialCharTok{*}\FunctionTok{dinvgamma}\NormalTok{(W\_star,a\_w,b\_w)}
+\NormalTok{sup\_ratio }\OtherTok{\textless{}{-}}\NormalTok{ C}\SpecialCharTok{*}\NormalTok{(}\FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{b\_v}\SpecialCharTok{/}\NormalTok{V\_star)}\SpecialCharTok{/}\NormalTok{(V\_star)}\SpecialCharTok{\^{}}\NormalTok{(a\_v}\SpecialCharTok{+}\DecValTok{1}\NormalTok{))}\SpecialCharTok{*}\NormalTok{(}\FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{b\_w}\SpecialCharTok{/}\NormalTok{W\_star)}\SpecialCharTok{/}\NormalTok{(W\_star)}\SpecialCharTok{\^{}}\NormalTok{(a\_w}\SpecialCharTok{+}\DecValTok{1}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+Step 2: Find a lower bound on the unnormalized distribution function,
+\(L\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dlognorm }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, m, sd)\{}
+  \FunctionTok{return}\NormalTok{(}\SpecialCharTok{{-}}\FloatTok{0.5}\SpecialCharTok{*}\FunctionTok{log}\NormalTok{(}\DecValTok{2}\SpecialCharTok{*}\NormalTok{pi}\SpecialCharTok{*}\NormalTok{sd}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{{-}}\NormalTok{(x}\SpecialCharTok{{-}}\NormalTok{m)}\SpecialCharTok{\^{}}\DecValTok{2}\SpecialCharTok{/}\NormalTok{(}\DecValTok{2}\SpecialCharTok{*}\NormalTok{sd}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{))}
+\NormalTok{\}}
+
+\NormalTok{dloginvgamma }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, a, b)\{}
+  \FunctionTok{return}\NormalTok{(a}\SpecialCharTok{*}\FunctionTok{log}\NormalTok{(b)}\SpecialCharTok{{-}}\FunctionTok{log}\NormalTok{(}\FunctionTok{gamma}\NormalTok{(a))}\SpecialCharTok{{-}}\NormalTok{(a}\SpecialCharTok{+}\DecValTok{1}\NormalTok{)}\SpecialCharTok{*}\FunctionTok{log}\NormalTok{(x)}\SpecialCharTok{{-}}\NormalTok{b}\SpecialCharTok{/}\NormalTok{x)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{logf }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{Y=}\NormalTok{Ydye, }\AttributeTok{para=}\NormalTok{par)\{}
+\NormalTok{  V }\OtherTok{\textless{}{-}}\NormalTok{ x[}\DecValTok{1}\NormalTok{]; W }\OtherTok{\textless{}{-}}\NormalTok{ x[}\DecValTok{2}\NormalTok{]; mu }\OtherTok{\textless{}{-}}\NormalTok{ x[}\DecValTok{3}\NormalTok{]; theta }\OtherTok{\textless{}{-}}\NormalTok{ x[}\DecValTok{4}\SpecialCharTok{:}\FunctionTok{length}\NormalTok{(x)]}
+  \ControlFlowTok{if}\NormalTok{  (V}\SpecialCharTok{\textless{}=}\DecValTok{0} \SpecialCharTok{||}\NormalTok{ W}\SpecialCharTok{\textless{}=}\DecValTok{0}\NormalTok{)\{}
+    \FunctionTok{return}\NormalTok{(}\DecValTok{0}\NormalTok{)}
+\NormalTok{  \}}
+\NormalTok{  a1 }\OtherTok{\textless{}{-}}\NormalTok{ para[}\DecValTok{1}\NormalTok{]; b1 }\OtherTok{\textless{}{-}}\NormalTok{ para[}\DecValTok{2}\NormalTok{]; a2 }\OtherTok{\textless{}{-}}\NormalTok{ para[}\DecValTok{3}\NormalTok{]; b2 }\OtherTok{\textless{}{-}}\NormalTok{ para[}\DecValTok{4}\NormalTok{]; a3 }\OtherTok{\textless{}{-}}\NormalTok{ para[}\DecValTok{5}\NormalTok{]; b3 }\OtherTok{\textless{}{-}}\NormalTok{ para[}\DecValTok{6}\NormalTok{];}
+  
+\NormalTok{  f\_v }\OtherTok{\textless{}{-}} \FunctionTok{dloginvgamma}\NormalTok{(V, a1, b1)}
+\NormalTok{  f\_w }\OtherTok{\textless{}{-}} \FunctionTok{dloginvgamma}\NormalTok{(W, a2, b2)}
+\NormalTok{  f\_u }\OtherTok{\textless{}{-}} \FunctionTok{dlognorm}\NormalTok{(mu, a3, }\FunctionTok{sqrt}\NormalTok{(b3))}
+  
+\NormalTok{  f\_theta }\OtherTok{\textless{}{-}} \DecValTok{0}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{length}\NormalTok{(theta))\{}
+\NormalTok{    f\_theta\_i }\OtherTok{\textless{}{-}} \FunctionTok{dlognorm}\NormalTok{(theta[i], mu, }\FunctionTok{sqrt}\NormalTok{(V))}
+\NormalTok{    f\_theta }\OtherTok{\textless{}{-}}\NormalTok{ f\_theta }\SpecialCharTok{+}\NormalTok{ f\_theta\_i}
+\NormalTok{  \}}
+  
+\NormalTok{  f\_y }\OtherTok{\textless{}{-}} \DecValTok{0}
+  \ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{length}\NormalTok{(theta))\{}
+    \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{length}\NormalTok{(Ydye[i,]))\{}
+\NormalTok{      f\_y\_i }\OtherTok{\textless{}{-}} \FunctionTok{dlognorm}\NormalTok{(Ydye[i,j],theta[i],}\FunctionTok{sqrt}\NormalTok{(W))}
+\NormalTok{      f\_y }\OtherTok{\textless{}{-}}\NormalTok{ f\_y }\SpecialCharTok{+}\NormalTok{ f\_y\_i}
+\NormalTok{    \}}
+\NormalTok{  \}}
+  
+\NormalTok{  logf }\OtherTok{\textless{}{-}}\NormalTok{ f\_v}\SpecialCharTok{+}\NormalTok{f\_w}\SpecialCharTok{+}\NormalTok{f\_u}\SpecialCharTok{+}\NormalTok{f\_theta}\SpecialCharTok{+}\NormalTok{f\_y}
+  \ControlFlowTok{if}\NormalTok{ (logf }\SpecialCharTok{==} \SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{)\{}
+    \FunctionTok{return}\NormalTok{(}\DecValTok{0}\NormalTok{)}
+\NormalTok{  \}}
+  \ControlFlowTok{else}\NormalTok{\{}
+    \FunctionTok{return}\NormalTok{(logf) }
+\NormalTok{  \}}
+  
+\NormalTok{\}}
+
+\NormalTok{f }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{Y=}\NormalTok{Ydye, }\AttributeTok{para=}\NormalTok{par)\{}
+\NormalTok{  logf\_val }\OtherTok{\textless{}{-}} \FunctionTok{logf}\NormalTok{(x, Y, para)}
+\ControlFlowTok{if}\NormalTok{ (logf\_val }\SpecialCharTok{==} \DecValTok{0}\NormalTok{)\{}
+    \FunctionTok{return}\NormalTok{(}\DecValTok{0}\NormalTok{)}
+\NormalTok{  \}}
+  \ControlFlowTok{else}\NormalTok{\{}
+    \FunctionTok{return}\NormalTok{(}\FunctionTok{exp}\NormalTok{(}\FunctionTok{logf}\NormalTok{(x, Y, para)))}
+\NormalTok{  \}}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{x }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{1.1}\NormalTok{,}\DecValTok{3000}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{)}
+
+\NormalTok{int1 }\OtherTok{\textless{}{-}} \FunctionTok{adaptIntegrate}\NormalTok{(logf, }\AttributeTok{lowerLimit =}\NormalTok{ x}\SpecialCharTok{{-}}\FunctionTok{rep}\NormalTok{(}\FloatTok{0.5}\NormalTok{, }\FunctionTok{length}\NormalTok{(x)), }\AttributeTok{upperLimit =}\NormalTok{ x}\SpecialCharTok{{-}}\FunctionTok{rep}\NormalTok{(}\FloatTok{0.0}\NormalTok{, }\FunctionTok{length}\NormalTok{(x)))}
+
+\NormalTok{int1\_val }\OtherTok{\textless{}{-}}\NormalTok{ int1}\SpecialCharTok{$}\NormalTok{integral}\SpecialCharTok{{-}}\NormalTok{int1}\SpecialCharTok{$}\NormalTok{error}
+
+\NormalTok{L}\OtherTok{=}\FunctionTok{exp}\NormalTok{(int1\_val)}
+\NormalTok{L}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.6392887
+\end{verbatim}
+
+According to equation 15, an upper bound on K is as follows,
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{K }\OtherTok{\textless{}{-}} \FunctionTok{log}\NormalTok{(sup\_ratio)}\SpecialCharTok{{-}}\NormalTok{int1\_val}
+\NormalTok{K }\OtherTok{\textless{}{-}} \FunctionTok{exp}\NormalTok{(K)}
+\NormalTok{K}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.0004891211
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{diff9900 }\OtherTok{\textless{}{-}}\NormalTok{ df\_diff\_all }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{mean\_diff =} \FunctionTok{mean}\NormalTok{(diff), }\AttributeTok{min\_diff =}  \FunctionTok{min}\NormalTok{(diff), }\AttributeTok{max\_diff =} \FunctionTok{max}\NormalTok{(diff)) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(iter }\SpecialCharTok{==} \DecValTok{9900}\NormalTok{)}
+
+\NormalTok{diff9900}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 x 4
+##    iter mean_diff min_diff max_diff
+##   <dbl>     <dbl>    <dbl>    <dbl>
+## 1  9900      7.40    0.349     66.3
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{diff9900}\SpecialCharTok{*}\NormalTok{K}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       iter   mean_diff     min_diff   max_diff
+## 1 4.842299 0.003618765 0.0001709074 0.03245292
+\end{verbatim}
+
+\subsection{Comparing this bound to Cowles and
+Rosenthal's}\label{comparing-this-bound-to-cowles-and-rosenthals}
+
+Generate the initial value of \(Y_0\sim \nu\)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{par }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{0.5}\NormalTok{,}\FloatTok{1.00001}\NormalTok{,}\FloatTok{0.00001}\NormalTok{,}\FloatTok{1.00001}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{10}\SpecialCharTok{\^{}}\NormalTok{(}\DecValTok{12}\NormalTok{))   }\CommentTok{\# initial values from Cowles and Rosenthal. Note that b1 is not 1, but 1.0001. This is because our method requires b1\textgreater{}1.}
+\NormalTok{a1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{1}\NormalTok{]; b1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{2}\NormalTok{]; a2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{3}\NormalTok{]; b2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{4}\NormalTok{]; a3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{5}\NormalTok{]; b3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{6}\NormalTok{];}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Generate initial values that are aligned with Cowles and Rosenthal}
+\NormalTok{batch\_m }\OtherTok{\textless{}{-}} \FunctionTok{apply}\NormalTok{(Ydye,}\DecValTok{1}\NormalTok{,mean)}
+\NormalTok{bar\_y }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(Ydye)}
+\NormalTok{v1 }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{((Ydye}\SpecialCharTok{{-}}\NormalTok{batch\_m)}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\NormalTok{(I}\SpecialCharTok{*}\NormalTok{J)}
+\NormalTok{v2 }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{((batch\_m}\SpecialCharTok{{-}}\NormalTok{bar\_y)}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}\SpecialCharTok{/}\NormalTok{I}
+
+\NormalTok{theta }\OtherTok{\textless{}{-}}\NormalTok{ (J}\SpecialCharTok{*}\NormalTok{v1}\SpecialCharTok{*}\NormalTok{batch\_m }\SpecialCharTok{+}\NormalTok{v2}\SpecialCharTok{*}\NormalTok{bar\_y)}\SpecialCharTok{/}\NormalTok{(J}\SpecialCharTok{*}\NormalTok{v1}\SpecialCharTok{+}\NormalTok{v2)}
+\NormalTok{u }\OtherTok{\textless{}{-}}\NormalTok{ bar\_y}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{simVCM }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{()\{ }\CommentTok{\#same as previous simVCM function except that X\_init is different and W is assigned 0 (since choice of priors would result in Inf)}
+\NormalTok{  M }\OtherTok{\textless{}{-}} \DecValTok{500}
+\NormalTok{  a1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{1}\NormalTok{]; b1 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{2}\NormalTok{]; a2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{3}\NormalTok{]; b2 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{4}\NormalTok{]; a3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{5}\NormalTok{]; b3 }\OtherTok{\textless{}{-}}\NormalTok{ par[}\DecValTok{6}\NormalTok{];}
+  
+  \CommentTok{\#initial value of mu and theta in Y coincides with V(X\_0)=0 (eqn 9 from Cowles and Rosenthal paper). initial values of V and W are taken as conditional distributions given mu and theta.}
+\NormalTok{  V }\OtherTok{\textless{}{-}} \FunctionTok{rinvgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, a1 }\SpecialCharTok{+}\NormalTok{ I}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, b1}\SpecialCharTok{+}\FunctionTok{sum}\NormalTok{((theta}\SpecialCharTok{{-}}\NormalTok{u)}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{))}
+\NormalTok{  W }\OtherTok{\textless{}{-}} \FunctionTok{rinvgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, a2}\SpecialCharTok{+}\NormalTok{I}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, b2 }\SpecialCharTok{+} \FunctionTok{sum}\NormalTok{((Ydye}\SpecialCharTok{{-}}\NormalTok{theta)}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{))}
+\NormalTok{  Y }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(V[}\DecValTok{1}\NormalTok{], W[}\DecValTok{1}\NormalTok{], u, theta)}
+\NormalTok{  Y\_init }\OtherTok{\textless{}{-}}\NormalTok{ Y}
+  
+  \CommentTok{\# initial value of X coincides with eqn 6 from paper}
+\NormalTok{  V }\OtherTok{\textless{}{-}} \FunctionTok{rinvgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, a1, b1}\DecValTok{{-}1}\NormalTok{)}
+\NormalTok{  W }\OtherTok{\textless{}{-}} \FunctionTok{rinvgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, a2, }\DecValTok{0}\NormalTok{)}
+\NormalTok{  u }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{, a3, }\FunctionTok{sqrt}\NormalTok{(b3))}
+\NormalTok{  theta }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{(I, }\FunctionTok{apply}\NormalTok{(Ydye,}\DecValTok{2}\NormalTok{,mean), W}\SpecialCharTok{/}\NormalTok{J)}
+\NormalTok{  X }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(V[}\DecValTok{1}\NormalTok{], W[}\DecValTok{1}\NormalTok{], u[}\DecValTok{1}\NormalTok{], theta)}
+\NormalTok{  X\_init }\OtherTok{\textless{}{-}}\NormalTok{ X}
+
+\NormalTok{  df\_X }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\FunctionTok{t}\NormalTok{(}\FunctionTok{c}\NormalTok{(X,}\DecValTok{0}\NormalTok{,}\DecValTok{0}\NormalTok{)))}
+\NormalTok{  df\_Y }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\FunctionTok{t}\NormalTok{(}\FunctionTok{c}\NormalTok{(Y,}\DecValTok{0}\NormalTok{,}\DecValTok{0}\NormalTok{)))}
+  \FunctionTok{colnames}\NormalTok{(df\_X) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"V"}\NormalTok{,}\StringTok{"W"}\NormalTok{,}\StringTok{"mu"}\NormalTok{,}\FunctionTok{paste}\NormalTok{(}\StringTok{"theta"}\NormalTok{,}\DecValTok{1}\SpecialCharTok{:}\NormalTok{I, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),}\StringTok{"coord"}\NormalTok{,}\StringTok{"iter"}\NormalTok{)}
+  \FunctionTok{colnames}\NormalTok{(df\_Y) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"V"}\NormalTok{,}\StringTok{"W"}\NormalTok{,}\StringTok{"mu"}\NormalTok{,}\FunctionTok{paste}\NormalTok{(}\StringTok{"theta"}\NormalTok{,}\DecValTok{1}\SpecialCharTok{:}\NormalTok{I, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),}\StringTok{"coord"}\NormalTok{,}\StringTok{"iter"}\NormalTok{)}
+
+ \CommentTok{\# a1 \textless{}{-} par[1]; b1 \textless{}{-} par[2]; a2 \textless{}{-} par[3]; b2 \textless{}{-} par[4]; a3 \textless{}{-} par[5]; b3 \textless{}{-} par[6];}
+
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{M) \{}
+      \ControlFlowTok{for}\NormalTok{ (coord }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{)\{}
+        \ControlFlowTok{if}\NormalTok{ (coord }\SpecialCharTok{==} \DecValTok{3}\NormalTok{) \{ }\CommentTok{\# Modify coordinate u}
+\NormalTok{          z }\OtherTok{=} \FunctionTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{)}
+\NormalTok{          X }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_u}\NormalTok{(X, z)}
+\NormalTok{          Y }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_u}\NormalTok{(Y, z)}
+\NormalTok{        \}}
+        \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (coord }\SpecialCharTok{==} \DecValTok{4}\NormalTok{) \{ }\CommentTok{\# Modify all I thetas}
+\NormalTok{          z }\OtherTok{=} \FunctionTok{rnorm}\NormalTok{(I,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{)}
+\NormalTok{          X }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_theta}\NormalTok{(X, z)}
+\NormalTok{          Y }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_theta}\NormalTok{(Y, z)}
+\NormalTok{        \}}
+        \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (coord }\SpecialCharTok{==} \DecValTok{1}\NormalTok{) \{ }\CommentTok{\# Modify coordinate V}
+\NormalTok{          g }\OtherTok{=} \FunctionTok{rgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{shape =}\NormalTok{ a1}\SpecialCharTok{+}\NormalTok{I}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{rate =} \DecValTok{1}\NormalTok{)}
+\NormalTok{          X }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_V}\NormalTok{(X, g)}
+\NormalTok{          Y }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_V}\NormalTok{(Y, g)}
+\NormalTok{        \}}
+        \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (coord }\SpecialCharTok{==} \DecValTok{2}\NormalTok{) \{ }\CommentTok{\# Modify coordinate W}
+\NormalTok{          g }\OtherTok{=} \FunctionTok{rgamma}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{shape =}\NormalTok{ a2}\SpecialCharTok{+}\NormalTok{I}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{rate =} \DecValTok{1}\NormalTok{)}
+\NormalTok{          X }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_W}\NormalTok{(X,g)}
+\NormalTok{          Y }\OtherTok{\textless{}{-}} \FunctionTok{gibbs\_update\_W}\NormalTok{(Y,g)}
+\NormalTok{        \}}
+\NormalTok{        df\_X }\OtherTok{\textless{}{-}} \FunctionTok{rbind}\NormalTok{(df\_X,}\FunctionTok{c}\NormalTok{(X, coord, i))}
+\NormalTok{        df\_Y }\OtherTok{\textless{}{-}} \FunctionTok{rbind}\NormalTok{(df\_Y,}\FunctionTok{c}\NormalTok{(Y, coord, i))}
+\NormalTok{      \}}
+\NormalTok{  \}}
+
+\NormalTok{  df\_X1 }\OtherTok{\textless{}{-}}\NormalTok{ df\_X }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =}\NormalTok{ V}\SpecialCharTok{:}\NormalTok{theta6, }\AttributeTok{names\_to =} \StringTok{"names"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"X"}\NormalTok{)}
+\NormalTok{  df\_Y1 }\OtherTok{\textless{}{-}}\NormalTok{ df\_Y }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =}\NormalTok{ V}\SpecialCharTok{:}\NormalTok{theta6, }\AttributeTok{names\_to =} \StringTok{"names"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"Y"}\NormalTok{)}
+
+\NormalTok{  df }\OtherTok{\textless{}{-}} \FunctionTok{left\_join}\NormalTok{(df\_X1, df\_Y1, }\AttributeTok{by=}\FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}coord\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}iter\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}names\textquotesingle{}}\NormalTok{))}
+\NormalTok{  df }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{diff =}\NormalTok{ X}\SpecialCharTok{{-}}\NormalTok{Y)}
+
+\NormalTok{  df\_diff }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{filter}\NormalTok{(coord }\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{summarise}\NormalTok{(}\AttributeTok{diff =} \FunctionTok{sum}\NormalTok{(}\FunctionTok{abs}\NormalTok{(diff)))}
+  \FunctionTok{return}\NormalTok{(df\_diff)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# df\_diff\_all \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff\_all \textless{}{-} df\_diff\_all \%\textgreater{}\% mutate(sim\_no=1)}
+\CommentTok{\# for (i in 2:2000)\{}
+\CommentTok{\#   df\_diff \textless{}{-} simVCM()}
+\CommentTok{\#   df\_diff \textless{}{-} df\_diff \%\textgreater{}\% mutate(sim\_no=i)}
+\CommentTok{\#   df\_diff\_all \textless{}{-} rbind(df\_diff\_all,df\_diff)}
+\CommentTok{\# \}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# df\_diff1 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff2 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff3 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff4 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff5 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff6 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff7 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff8 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff9 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff10 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff11 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff12 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff13 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff14 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff15 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff16 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff17 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff18 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff19 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff20 \textless{}{-} simVCM()}
+\CommentTok{\# }
+\CommentTok{\# df\_diff21 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff22 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff23 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff24 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff25 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff26 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff27 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff28 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff29 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff30 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff31 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff32 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff33 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff34 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff35 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff36 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff37 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff38 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff39 \textless{}{-} simVCM()}
+\CommentTok{\# df\_diff40 \textless{}{-} simVCM()}
+\CommentTok{\# }
+\CommentTok{\# df\_diff1 \textless{}{-} df\_diff1 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}1\textquotesingle{})}
+\CommentTok{\# df\_diff2 \textless{}{-} df\_diff2 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}2\textquotesingle{})}
+\CommentTok{\# df\_diff3 \textless{}{-} df\_diff3 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}3\textquotesingle{})}
+\CommentTok{\# df\_diff4 \textless{}{-} df\_diff4 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}4\textquotesingle{})}
+\CommentTok{\# df\_diff5 \textless{}{-} df\_diff5 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}5\textquotesingle{})}
+\CommentTok{\# df\_diff6 \textless{}{-} df\_diff6 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}6\textquotesingle{})}
+\CommentTok{\# df\_diff7 \textless{}{-} df\_diff7 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}7\textquotesingle{})}
+\CommentTok{\# df\_diff8 \textless{}{-} df\_diff8 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}8\textquotesingle{})}
+\CommentTok{\# df\_diff9 \textless{}{-} df\_diff9 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}9\textquotesingle{})}
+\CommentTok{\# df\_diff10 \textless{}{-} df\_diff10 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}10\textquotesingle{})}
+\CommentTok{\# }
+\CommentTok{\# df\_diff11 \textless{}{-} df\_diff11 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}11\textquotesingle{})}
+\CommentTok{\# df\_diff12 \textless{}{-} df\_diff12 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}12\textquotesingle{})}
+\CommentTok{\# df\_diff13 \textless{}{-} df\_diff13 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}13\textquotesingle{})}
+\CommentTok{\# df\_diff14 \textless{}{-} df\_diff14 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}14\textquotesingle{})}
+\CommentTok{\# df\_diff15 \textless{}{-} df\_diff15 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}15\textquotesingle{})}
+\CommentTok{\# df\_diff16 \textless{}{-} df\_diff16 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}16\textquotesingle{})}
+\CommentTok{\# df\_diff17 \textless{}{-} df\_diff17 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}17\textquotesingle{})}
+\CommentTok{\# df\_diff18 \textless{}{-} df\_diff18 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}18\textquotesingle{})}
+\CommentTok{\# df\_diff19 \textless{}{-} df\_diff19 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}19\textquotesingle{})}
+\CommentTok{\# df\_diff20 \textless{}{-} df\_diff20 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}20\textquotesingle{})}
+\CommentTok{\# }
+\CommentTok{\# df\_diff21 \textless{}{-} df\_diff21 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}21\textquotesingle{})}
+\CommentTok{\# df\_diff22 \textless{}{-} df\_diff22 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}22\textquotesingle{})}
+\CommentTok{\# df\_diff23 \textless{}{-} df\_diff23 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}23\textquotesingle{})}
+\CommentTok{\# df\_diff24 \textless{}{-} df\_diff24 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}24\textquotesingle{})}
+\CommentTok{\# df\_diff25 \textless{}{-} df\_diff25 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}25\textquotesingle{})}
+\CommentTok{\# df\_diff26 \textless{}{-} df\_diff26 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}26\textquotesingle{})}
+\CommentTok{\# df\_diff27 \textless{}{-} df\_diff27 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}27\textquotesingle{})}
+\CommentTok{\# df\_diff28 \textless{}{-} df\_diff28 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}28\textquotesingle{})}
+\CommentTok{\# df\_diff29 \textless{}{-} df\_diff29 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}29\textquotesingle{})}
+\CommentTok{\# df\_diff30 \textless{}{-} df\_diff30 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}30\textquotesingle{})}
+\CommentTok{\# }
+\CommentTok{\# df\_diff31 \textless{}{-} df\_diff31 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}31\textquotesingle{})}
+\CommentTok{\# df\_diff32 \textless{}{-} df\_diff32 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}32\textquotesingle{})}
+\CommentTok{\# df\_diff33 \textless{}{-} df\_diff33 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}33\textquotesingle{})}
+\CommentTok{\# df\_diff34 \textless{}{-} df\_diff34 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}34\textquotesingle{})}
+\CommentTok{\# df\_diff35 \textless{}{-} df\_diff35 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}35\textquotesingle{})}
+\CommentTok{\# df\_diff36 \textless{}{-} df\_diff36 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}36\textquotesingle{})}
+\CommentTok{\# df\_diff37 \textless{}{-} df\_diff37 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}37\textquotesingle{})}
+\CommentTok{\# df\_diff38 \textless{}{-} df\_diff38 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}38\textquotesingle{})}
+\CommentTok{\# df\_diff39 \textless{}{-} df\_diff39 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}39\textquotesingle{})}
+\CommentTok{\# df\_diff40 \textless{}{-} df\_diff40 \%\textgreater{}\% mutate(sim\_no=\textquotesingle{}40\textquotesingle{})}
+\CommentTok{\# }
+\CommentTok{\# }
+\CommentTok{\# df\_diff\_all \textless{}{-} rbind(df\_diff1, df\_diff2, df\_diff3, df\_diff4, df\_diff5, df\_diff6, df\_diff7, df\_diff8, df\_diff9, df\_diff10, df\_diff11, df\_diff12, df\_diff13, df\_diff14, df\_diff15, df\_diff16, df\_diff17, df\_diff18, df\_diff19, df\_diff20, df\_diff21, df\_diff22, df\_diff23, df\_diff24, df\_diff25, df\_diff26, df\_diff27, df\_diff28, df\_diff29, df\_diff30, df\_diff31, df\_diff32, df\_diff33, df\_diff34, df\_diff35, df\_diff36, df\_diff37, df\_diff38, df\_diff39, df\_diff40)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#save(df\_diff\_all, file = "df\_diff\_all\_Cowles\_VarComp.RData")}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{load}\NormalTok{(}\StringTok{\textquotesingle{}df\_diff\_all\_Cowles\_VarComp.RData\textquotesingle{}}\NormalTok{)}
+\CommentTok{\#load("df\_X1\_Cowles\_VarComp.RData")}
+\CommentTok{\#load("df\_Y1\_Cowles\_VarComp.RData")}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_diff\_all }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{mean\_diff =} \FunctionTok{mean}\NormalTok{(diff), }\AttributeTok{min\_diff =}  \FunctionTok{min}\NormalTok{(diff), }\AttributeTok{max\_diff =} \FunctionTok{max}\NormalTok{(diff),}\AttributeTok{lq\_diff =}  \FunctionTok{quantile}\NormalTok{(diff, }\AttributeTok{probs =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.25}\NormalTok{)), }\AttributeTok{uq\_diff =} \FunctionTok{quantile}\NormalTok{(diff, }\AttributeTok{probs =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.75}\NormalTok{))) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ min\_diff, }\AttributeTok{ymax =}\NormalTok{ max\_diff), }\AttributeTok{fill =} \StringTok{"grey70"}\NormalTok{, }\AttributeTok{alpha=}\FloatTok{0.50}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ lq\_diff, }\AttributeTok{ymax =}\NormalTok{ uq\_diff), }\AttributeTok{fill =} \StringTok{"grey70"}\NormalTok{, }\AttributeTok{alpha=}\FloatTok{0.750}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ mean\_diff)) }\SpecialCharTok{+} \FunctionTok{scale\_y\_log10}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{geom\_hline}\NormalTok{(}\AttributeTok{yintercept=}\FloatTok{0.01}\NormalTok{) }\SpecialCharTok{+}
+  \CommentTok{\#labs(title = TeX("Value of $||X\_n{-}X\textquotesingle{}\_n||\_1$"), subtitle = "Using common random number technique") +}
+  \FunctionTok{theme\_bw}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{xlab}\NormalTok{(}\FunctionTok{TeX}\NormalTok{(}\StringTok{"n=iteration"}\NormalTok{)) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\FunctionTok{TeX}\NormalTok{(}\StringTok{"Logscale of $||X\_n{-}X\textquotesingle{}\_n||\_1$"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in scale_y_log10(): log-10 transformation introduced infinite values.
+## log-10 transformation introduced infinite values.
+## log-10 transformation introduced infinite values.
+\end{verbatim}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-32-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_diff\_all }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{mean\_diff =} \FunctionTok{mean}\NormalTok{(diff), }\AttributeTok{min\_diff =}  \FunctionTok{min}\NormalTok{(diff), }\AttributeTok{max\_diff =} \FunctionTok{max}\NormalTok{(diff)) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{==}\DecValTok{471}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 x 4
+##    iter mean_diff min_diff max_diff
+##   <dbl>     <dbl>    <dbl>    <dbl>
+## 1   471   0.00851        0     12.2
+\end{verbatim}
+
+\subsection{\texorpdfstring{Find the constant \(K\) from theorem 4.4
+with priors specified by
+Cowles}{Find the constant K from theorem 4.4 with priors specified by Cowles}}\label{find-the-constant-k-from-theorem-4.4-with-priors-specified-by-cowles}
+
+Generating bound between \textbar X\_n-Y\_n\textbar{} and
+\textbar X\_n-X\_infty\textbar{}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{V\_star }\OtherTok{\textless{}{-}} \DecValTok{2}\SpecialCharTok{/}\NormalTok{I}
+\NormalTok{W\_star }\OtherTok{\textless{}{-}} \DecValTok{2}\SpecialCharTok{/}\NormalTok{(J}\SpecialCharTok{*}\NormalTok{I}\SpecialCharTok{{-}}\NormalTok{I)}
+
+\NormalTok{C }\OtherTok{\textless{}{-}}\NormalTok{ (b1}\SpecialCharTok{/}\NormalTok{(b1}\DecValTok{{-}1}\NormalTok{))}\SpecialCharTok{\^{}}\NormalTok{a1}\SpecialCharTok{*}\NormalTok{(b2}\SpecialCharTok{/}\NormalTok{(b2}\DecValTok{{-}1}\NormalTok{))}\SpecialCharTok{\^{}}\NormalTok{a2}\SpecialCharTok{*}\DecValTok{1}\SpecialCharTok{/}\NormalTok{((}\DecValTok{2}\SpecialCharTok{*}\NormalTok{pi)}\SpecialCharTok{\^{}}\NormalTok{(I}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{/}\DecValTok{2}\NormalTok{)}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{\^{}}\NormalTok{(}\DecValTok{1}\SpecialCharTok{/}\DecValTok{2}\NormalTok{))}
+
+\NormalTok{sup\_ratio }\OtherTok{\textless{}{-}}\NormalTok{ C}\SpecialCharTok{*}\NormalTok{(}\FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{1}\SpecialCharTok{/}\NormalTok{V\_star)}\SpecialCharTok{/}\NormalTok{(V\_star)}\SpecialCharTok{\^{}}\NormalTok{(I}\SpecialCharTok{/}\DecValTok{2}\NormalTok{))}\SpecialCharTok{*}\NormalTok{(}\FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{1}\SpecialCharTok{/}\NormalTok{W\_star)}\SpecialCharTok{/}\NormalTok{(W\_star)}\SpecialCharTok{\^{}}\NormalTok{((J}\SpecialCharTok{*}\NormalTok{I}\SpecialCharTok{{-}}\NormalTok{I)}\SpecialCharTok{/}\DecValTok{2}\NormalTok{))}
+\NormalTok{sup\_ratio}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.01109151
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{x }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{1000}\NormalTok{,}\DecValTok{3000}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{,}\DecValTok{1520}\NormalTok{)}
+
+\NormalTok{int1 }\OtherTok{\textless{}{-}} \FunctionTok{adaptIntegrate}\NormalTok{(logf, }\AttributeTok{lowerLimit =}\NormalTok{ x}\SpecialCharTok{{-}}\FunctionTok{rep}\NormalTok{(}\FloatTok{0.5}\NormalTok{, }\FunctionTok{length}\NormalTok{(x)), }\AttributeTok{upperLimit =}\NormalTok{ x}\SpecialCharTok{+}\FunctionTok{rep}\NormalTok{(}\FloatTok{0.10}\NormalTok{, }\FunctionTok{length}\NormalTok{(x)))}
+
+\NormalTok{int1\_val }\OtherTok{\textless{}{-}}\NormalTok{ int1}\SpecialCharTok{$}\NormalTok{integral}\SpecialCharTok{{-}}\NormalTok{int1}\SpecialCharTok{$}\NormalTok{error}
+
+\NormalTok{L}\OtherTok{=}\FunctionTok{exp}\NormalTok{(int1\_val)}
+\NormalTok{L}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.09032198
+\end{verbatim}
+
+According to equation 15, an upper bound on K is as follows,
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{K }\OtherTok{\textless{}{-}} \FunctionTok{log}\NormalTok{(sup\_ratio)}\SpecialCharTok{{-}}\NormalTok{int1\_val}
+\NormalTok{K }\OtherTok{\textless{}{-}} \FunctionTok{exp}\NormalTok{(K)}
+\NormalTok{K}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.1227997
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{diffK }\OtherTok{\textless{}{-}}\NormalTok{ df\_diff\_all }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{mean\_diff =} \FunctionTok{mean}\NormalTok{(diff)}\SpecialCharTok{*}\NormalTok{K, }\AttributeTok{min\_diff =}  \FunctionTok{min}\NormalTok{(diff)}\SpecialCharTok{*}\NormalTok{K, }\AttributeTok{max\_diff =} \FunctionTok{max}\NormalTok{(diff)}\SpecialCharTok{*}\NormalTok{K) }
+
+\NormalTok{diffK }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ min\_diff, }\AttributeTok{ymax =}\NormalTok{ max\_diff), }\AttributeTok{fill =} \StringTok{"grey70"}\NormalTok{, }\AttributeTok{alpha=}\FloatTok{0.75}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ mean\_diff)) }\SpecialCharTok{+} \FunctionTok{scale\_y\_log10}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{geom\_hline}\NormalTok{(}\AttributeTok{yintercept=}\FloatTok{0.01}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \FunctionTok{TeX}\NormalTok{(}\StringTok{"Logscale of $||X\_n{-}X\textquotesingle{}\_n||\_1$"}\NormalTok{), }\AttributeTok{subtitle =} \StringTok{"Using common random number technique"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{xlab}\NormalTok{(}\FunctionTok{TeX}\NormalTok{(}\StringTok{"n=iteration"}\NormalTok{)) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\FunctionTok{TeX}\NormalTok{(}\StringTok{"$K||X\_n{-}X\textquotesingle{}\_n||\_1$"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in scale_y_log10(): log-10 transformation introduced infinite values.
+\end{verbatim}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-37-1.pdf} \#\#
+Generate bound in TV from Wass distance.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# I \textless{}{-} dim(Ydye)[2]}
+\CommentTok{\# J \textless{}{-} dim(Ydye)[1]}
+
+\NormalTok{c1}\OtherTok{=}\NormalTok{(}\DecValTok{2}\SpecialCharTok{/}\NormalTok{I)}\SpecialCharTok{*}\NormalTok{(I}\SpecialCharTok{/}\DecValTok{2}\SpecialCharTok{+}\NormalTok{a1)}\SpecialCharTok{*}\NormalTok{(}\DecValTok{1}\SpecialCharTok{+}\FunctionTok{sqrt}\NormalTok{(}\DecValTok{2}\SpecialCharTok{/}\NormalTok{b1)}\SpecialCharTok{*}\DecValTok{1}\SpecialCharTok{/}\NormalTok{I}\SpecialCharTok{+}\DecValTok{1}\SpecialCharTok{/}\NormalTok{(}\DecValTok{2}\SpecialCharTok{*}\NormalTok{b1}\SpecialCharTok{*}\NormalTok{I}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{))}\SpecialCharTok{\^{}}\NormalTok{(I}\SpecialCharTok{/}\DecValTok{2}\SpecialCharTok{+}\NormalTok{a1}\DecValTok{{-}1}\NormalTok{)}\SpecialCharTok{*}\NormalTok{(}\FunctionTok{sqrt}\NormalTok{(}\DecValTok{2}\SpecialCharTok{/}\NormalTok{b1)}\SpecialCharTok{+}\DecValTok{1}\SpecialCharTok{/}\NormalTok{(b1}\SpecialCharTok{*}\NormalTok{I))}
+
+\NormalTok{c2}\OtherTok{=}\DecValTok{2}\SpecialCharTok{/}\NormalTok{(I}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{\^{}}\NormalTok{(}\DecValTok{3}\SpecialCharTok{/}\DecValTok{2}\NormalTok{))}\SpecialCharTok{*}\NormalTok{((I}\SpecialCharTok{*}\NormalTok{J)}\SpecialCharTok{/}\DecValTok{2}\SpecialCharTok{+}\NormalTok{a2)}\SpecialCharTok{*}\NormalTok{(}\DecValTok{1}\SpecialCharTok{+}\DecValTok{2}\SpecialCharTok{/}\NormalTok{(}\FunctionTok{sqrt}\NormalTok{(b2)}\SpecialCharTok{*}\NormalTok{I}\SpecialCharTok{*}\NormalTok{J)}\SpecialCharTok{+}\DecValTok{1}\SpecialCharTok{/}\NormalTok{(b2}\SpecialCharTok{*}\NormalTok{I}\SpecialCharTok{\^{}}\DecValTok{2}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{))}\SpecialCharTok{\^{}}\NormalTok{(I}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{/}\DecValTok{2}\SpecialCharTok{+}\NormalTok{a2}\DecValTok{{-}1}\NormalTok{)}\SpecialCharTok{*}\NormalTok{(}\DecValTok{2}\SpecialCharTok{*}\FunctionTok{sqrt}\NormalTok{(J}\SpecialCharTok{/}\NormalTok{b2)}\SpecialCharTok{+}\DecValTok{2}\SpecialCharTok{/}\NormalTok{(b2}\SpecialCharTok{*}\FunctionTok{sqrt}\NormalTok{(J)}\SpecialCharTok{*}\NormalTok{I))}
+
+\NormalTok{TV }\OtherTok{\textless{}{-}}\NormalTok{ (c1}\SpecialCharTok{+}\NormalTok{c2)}\SpecialCharTok{*}\NormalTok{J}\SpecialCharTok{\^{}}\NormalTok{(}\FloatTok{1.5}\NormalTok{)}\SpecialCharTok{*}\NormalTok{I}
+\NormalTok{TV}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 563.178
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{K}\SpecialCharTok{*}\NormalTok{TV}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 69.15807
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{diffTV }\OtherTok{\textless{}{-}}\NormalTok{ df\_diff\_all }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(iter) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{mean\_diff =} \FunctionTok{mean}\NormalTok{(diff)}\SpecialCharTok{*}\NormalTok{K}\SpecialCharTok{*}\NormalTok{TV, }\AttributeTok{min\_diff =}  \FunctionTok{min}\NormalTok{(diff)}\SpecialCharTok{*}\NormalTok{K}\SpecialCharTok{*}\NormalTok{TV, }\AttributeTok{max\_diff =} \FunctionTok{max}\NormalTok{(diff)}\SpecialCharTok{*}\NormalTok{K}\SpecialCharTok{*}\NormalTok{TV) }
+\NormalTok{diffTV }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{\textgreater{}}\DecValTok{2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ iter)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ min\_diff, }\AttributeTok{ymax =}\NormalTok{ max\_diff), }\AttributeTok{fill =} \StringTok{"grey70"}\NormalTok{, }\AttributeTok{alpha=}\FloatTok{0.75}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ mean\_diff)) }\SpecialCharTok{+} \FunctionTok{scale\_y\_log10}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{geom\_hline}\NormalTok{(}\AttributeTok{yintercept=}\FloatTok{0.01}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \FunctionTok{TeX}\NormalTok{(}\StringTok{"Upper bound on $||X\_n{-}X\_\{}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{infty\}||\_\{TV\}$"}\NormalTok{), }\AttributeTok{subtitle =} \StringTok{"Using common random number technique"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{xlab}\NormalTok{(}\FunctionTok{TeX}\NormalTok{(}\StringTok{"n=iteration"}\NormalTok{)) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\FunctionTok{TeX}\NormalTok{(}\StringTok{"Log scale of $K*TV*||X\_n{-}X\_\{}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{infty\}||\_\{TV\}$"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in scale_y_log10(): log-10 transformation introduced infinite values.
+\end{verbatim}
+
+\includegraphics{VarComp_files/figure-latex/unnamed-chunk-39-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{diffTV }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(iter}\SpecialCharTok{==}\DecValTok{263}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 x 4
+##    iter mean_diff min_diff max_diff
+##   <dbl>     <dbl>    <dbl>    <dbl>
+## 1   263      246.        0  320891.
+\end{verbatim}
+
+\end{document}

@@ -1,0 +1,410 @@
+---
+title: "CommonRandomNumber3"
+output:
+  html_document: default
+  pdf_document: default
+date: "2025-02-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(matlib)
+library(cubature)
+library(latex2exp)
+library(ggplot2)
+library(MCMCpack)
+library(coda)
+```
+
+The following code generated the graphs and calculations found in "Applying the common random number technique as a Markov chain convergence diagnostic."
+
+## Bayesian Regression Gibbs Sampler
+
+Numerical example
+```{r}
+# Data is obtained from the general linear models textbook by Dobson
+#Table 6.3 Carbohydrate, age, relative weight and protein for twenty male insulin dependent diabetics; for units, see text (data from K. Webb, personal communication).
+
+df <- c(33, 33, 100, 14,
+40, 47, 92, 15,
+37, 49, 135, 18,
+27, 35, 144, 12,
+30, 46, 140, 15,
+43, 52, 101, 15,
+34, 62, 95, 14,
+48, 23, 101, 17,
+30, 32, 98, 15,
+38, 42, 105, 14,
+50, 31, 108, 17,
+51, 61, 85, 19,
+30, 63, 130, 19,
+36, 40, 127, 20,
+41, 50, 109, 15,
+42, 64, 107, 16,
+46, 56, 117, 18,
+24, 61, 100, 13,
+35, 48, 118, 18,
+37, 28, 102, 14)
+
+df <- matrix(df, nrow = 20, byrow=TRUE)
+
+Y <- df[,1]
+X <- cbind(1,df[,-1])
+n <- length(Y)
+p <- dim(X)[2]
+
+df <- data.frame(df)
+colnames(df) <- c("carbs", "age", "weight", "protein")
+```
+
+```{r}
+# setting priors: beta ~ N(b_0,E_0) sigma^2 ~ Inv-Chi^2(v_0, c_0)
+b_0 <- rep(0,4)
+E_0 <- diag(4)
+v_0 <- 1
+#v_0 <- 5
+#c_0 <- 6
+c_0 <- 10
+```
+
+Consistent with equation (18) we define 
+$$g(\beta,\sigma^2) =  \frac{1}{(\sigma^2)^{(n+\upsilon_0)/2+1}}\exp\left(-\frac{1}{2\sigma^2} (y-X\beta)^T(y-X\beta) -\frac{1}{2}(\beta-\beta_0)^T\Sigma_{\beta}^{-1} (\beta-\beta_0) -\frac{\upsilon_0 c_0^2}{\sigma^2}\right)$$
+We further define 
+$$f(\beta,\sigma^2) = \log(g(\beta,\sigma^2))$$
+
+
+```{r}
+# g(x,y)= g(beta,sigma^2) as defined in equation 6
+g <- function(x){ 
+  b <- c(x[1], x[2], x[3], x[4])
+  o <- x[5]
+  z = exp(-((n+v_0)/2+1)*log(o) - 1/(2*o)*t(Y-(X %*% b)) %*% (Y-(X %*% b)) - 0.5*t(b-b_0) %*% inv(E_0) %*% (b-b_0) - v_0*c_0/o)
+  return(z)}
+
+f <- function(x){ 
+  b <- c(x[1], x[2], x[3], x[4])
+  o <- x[5]
+  z = -((n+v_0)/2+1)*log(o) - 1/(2*o)*t(Y-(X %*% b)) %*% (Y-(X %*% b)) - 0.5*t(b-b_0) %*% inv(E_0) %*% (b-b_0) - v_0*c_0/o
+  return(-z)
+  }
+```
+
+We want to find a lower bound ($L$) on $\int_{\mathbb{R}^4\times \mathbb{R}}g(\beta,\sigma^2)d(\beta,\sigma^2)$. To do so, we apply the following,
+
+$\int_{\mathbb{R}^4\times \mathbb{R}}g(\beta,\sigma^2)d(\beta,\sigma^2)\geq \int_{C}g(\beta,\sigma^2)d(\beta,\sigma^2)\geq e^{\int_{C}f(\beta,\sigma^2)d(\beta,\sigma^2)}$
+
+```{r}
+x <- c(0.1,0.1,0.1,0.1,0.1)
+x <- optim(x, f)$par
+#c(0.1,0.1,0.1,0.1,0.1)
+#c(0.2,0.2,0.2,0.2,0.2)
+int_f <- adaptIntegrate(f, lowerLimit = x-c(0.1,0.1,0.1,0.1,0.1), upperLimit = x+c(0.1,0.1,0.1,0.1,0.1))
+int_f
+```
+
+```{r}
+L <- exp(-int_f$integral)
+L
+```
+```{r}
+alpha <- (n+v_0)/2
+beta <- v_0*c_0/2
+K <- 1/L*gamma(alpha)/beta^alpha #*(2*pi)^(p/2)
+K
+tvbound <- (n+v_0)^2/(2*v_0*c_0)
+tvbound
+```
+The following is function that generates $\sigma^2_{n+1}$ given $\sigma^2_n$, equation 19.
+
+```{r}
+b_hat <- inv(t(X) %*% X) %*% t(X) %*%  Y
+invE_0 <- inv(E_0)
+nextIt <- function(o, Z, G){
+  eigenV <- eigen(t(X) %*% X/o + inv(E_0))
+  Q <- eigenV$vectors
+  L <- diag(eigenV$values)
+  Vinv12 <-  Q %*% inv(sqrt(L)) %*% inv(Q)
+  Vinv <-  Q %*% inv(L) %*% inv(Q)
+  b_tilde <- Vinv %*% (t(X) %*% X %*% b_hat/o + inv(E_0) %*% b_0)
+  W <- X %*% b_tilde - Y + X %*% Vinv12 %*% Z
+  o1 <- (v_0*c_0/2 +(t(W) %*% W)/2)/G
+  return(o1)
+}
+
+```
+
+The following is a function that generates $\beta_n$ from $\sigma_n^2$
+```{r}
+BetaIt <- function(o, Z){
+  eigenV <- eigen(t(X) %*% X/o + inv(E_0))
+  Q <- eigenV$vectors
+  L <- diag(eigenV$values)
+  Vinv <-  Q %*% inv(L) %*% inv(Q)
+  Vinv12 <-  Q %*% inv(sqrt(L)) %*% inv(Q)
+  b_tilde <- Vinv %*% (t(X) %*% X %*% b_hat/o + inv(E_0) %*% b_0)
+  b <- b_tilde + Vinv12 %*% Z
+  return(b)
+}
+```
+
+Now we apply the common random number technique to generate an estimate of $E[|X_k-Y_k|]$, $N=100$ $I=1000$ and $X_0,Y_0\sim \Gamma^{-1}(\alpha',\beta')=\Gamma^{-1}(10.5,2)$
+
+```{r}
+# I = 1000
+# #I = 100
+# J = 100
+# # I=10
+# # J=10
+# diff <- matrix(0, I, J)
+# diffB <- matrix(0, I, J)
+# it1 <- matrix(0, I, J)
+# it2 <- matrix(0, I, J)
+# for(i in 1:I){
+#   it <- matrix(0, ncol=2, nrow=J)
+# 
+#   # it[1,] <- 1/rgamma(2, shape = alpha, rate = beta)
+#   it[1,] <- c(1/rgamma(1, shape = alpha, rate = beta), 100)
+#   
+#   Z <- rnorm(p, 0, 1)
+#   beta1 <- BetaIt(it[1,1], Z)
+#   beta2 <- BetaIt(it[1,2], Z)
+#   diffB[i,1] <- sum(abs(beta1-beta2))
+#   for(j in 2:J){
+#     Z <- rnorm(p, 0, 1)
+#     G <- rgamma(1, shape = alpha, rate =1)
+#     it[j,1] <- nextIt(it[j-1,1], Z, G)
+#     it[j,2] <- nextIt(it[j-1,2], Z, G)
+#     
+#     #Calculate beta
+#     #Z <- rnorm(p, 0, 1)
+#     beta1 <- BetaIt(it[j,1], Z)
+#     beta2 <- BetaIt(it[j,2], Z)
+#     diffB[i,j] <- sum(abs(beta1-beta2))
+#   }
+#   
+#   diff[i,] <- abs(it[,1]-it[,2])
+#   #it1[i,] <- it[,1]
+#   #it2[i,] <- it[,2]
+# }
+```
+
+
+
+```{r}
+# diff_df <- data.frame(t(diff), iter_no = 1:J)
+# diff_df <- diff_df %>% 
+#   pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val") 
+# 
+# diffB_df <- data.frame(t(diffB), iter_no = 1:J)
+# diffB_df <- diffB_df %>% 
+#   pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val") 
+# 
+# diff_df <- diff_df %>% left_join(diffB_df, by=c("iter_no","sim_no"))
+# names(diff_df) <- c("iter_no", "sim_no", "o", "b")
+# diff_df <- diff_df %>% mutate(val = o+b)
+```
+
+```{r}
+#save(diff_df, file = "diff_df_BayesReg.RData")
+```
+
+```{r}
+load('diff_df_BayesReg.RData')
+```
+
+
+
+
+```{r}
+diff_df %>% 
+  group_by(iter_no) %>% 
+  summarise(mean_val = mean(val), max_val = max(val), min_val = min(val)) %>% 
+  ggplot(aes(x = iter_no)) + 
+  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "grey70", alpha=0.75) +
+  geom_line(aes(y = mean_val)) + 
+  theme(legend.position = "none") +
+  #labs(title = TeX("Value of $||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"), subtitle = "Based on 1000 simulations") +
+  xlab("n=iteration") + ylab(TeX("$||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"))
+```
+```{r}
+diff_df %>% 
+  mutate(val=val*K) %>% 
+  group_by(iter_no) %>% 
+  summarise(mean_val = mean(val), max_val = max(val), min_val = max(min(val),10^(-6)),lq_val =  quantile(val, probs = c(0.25)), uq_val = quantile(val, probs = c(0.75))) %>% 
+  ggplot(aes(x = iter_no)) + 
+  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "grey70", alpha=0.50) +
+  geom_ribbon(aes(ymin = lq_val, ymax = uq_val), fill = "grey70", alpha=0.750) +
+  geom_line(aes(y = mean_val), size=1) + scale_y_log10()+ 
+  theme(legend.position = "none") + geom_hline(yintercept=0.01) +
+  #labs(title = TeX("Value of $||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"), subtitle = "Based on 1000 simulations") +
+  xlab("n=iteration") + ylab(TeX("Logscale of $K||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$")) 
+```
+```{r}
+first_hit <- diff_df %>% 
+  mutate(val=val*K) %>% 
+  group_by(iter_no) %>% 
+  summarise(diff=mean(val)) %>% 
+  filter(diff<=0.01) %>% 
+  summarise(first_hit=min(iter_no))
+
+first_hit <- first_hit$first_hit
+first_hit
+
+expdiff <- diff_df %>%
+  mutate(val=val*K) %>% 
+  filter(iter_no==first_hit) %>%
+  summarise(expdiff = mean(val))
+expdiff
+
+```
+
+```{r}
+K*tvbound
+```
+```{r}
+first_hit <- diff_df %>% 
+  mutate(val=val*K*tvbound) %>% 
+  group_by(iter_no) %>% 
+  summarise(diff=mean(val)) %>% 
+  filter(diff<=0.01) %>% 
+  summarise(first_hit=min(iter_no))
+
+first_hit <- first_hit$first_hit
+first_hit
+
+expdiff <- diff_df %>%
+  mutate(val=val*K*tvbound) %>% 
+  filter(iter_no==first_hit) %>%
+  summarise(expdiff = mean(val))
+expdiff
+
+```
+
+## Bound comparison
+
+
+```{r}
+# Calculation of the Gelman Rubin diagnostic.
+it_init <- seq(5,1000, by =50)
+I = length(it_init)
+
+J = 10
+
+diff <- matrix(0, I, J)
+diffB <- matrix(0, I, J)
+it1 <- matrix(0, I, J)
+it2 <- matrix(0, I, J)
+for(i in 1:I){
+  it <- matrix(0, ncol=2, nrow=J)
+
+  it[1,] <- it_init[i]
+  
+  Z <- rnorm(p, 0, 1)
+  beta1 <- BetaIt(it[1,1], Z)
+  beta2 <- BetaIt(it[1,2], Z)
+  diffB[i,1] <- sum(abs(beta1-beta2))
+  for(j in 2:J){
+    Z <- rnorm(p, 0, 1)
+    G <- rgamma(1, shape = alpha, rate =1)
+    it[j,1] <- nextIt(it[j-1,1], Z, G)
+    it[j,2] <- nextIt(it[j-1,2], Z, G)
+    
+    # #Calculate beta
+    # #Z <- rnorm(p, 0, 1)
+    # beta1 <- BetaIt(it[j,1], Z)
+    # beta2 <- BetaIt(it[j,2], Z)
+    # diffB[i,j] <- sum(abs(beta1-beta2))
+  }
+  
+  it1[i,] <- it[,1]
+}
+
+it_list <- list(mcmc(it1[1,]), mcmc(it1[2,]), mcmc(it1[3,]), mcmc(it1[4,]), mcmc(it1[5,]), mcmc(it1[6,]), mcmc(it1[7,]), mcmc(it1[8,]), mcmc(it1[9,]), mcmc(it1[10,]), mcmc(it1[11,]), mcmc(it1[12,]), mcmc(it1[13,]), mcmc(it1[14,]), mcmc(it1[15,]), mcmc(it1[16,]), mcmc(it1[17,]), mcmc(it1[18,]), mcmc(it1[19,]), mcmc(it1[20,]))
+# it_list <- append(it_list, mcmc(it1[2,]))
+gelman.diag(it_list,transform=TRUE)
+```
+```{r}
+#gelman.plot(it_list)
+```
+```{r}
+traceplot(it_list)
+```
+
+
+## Calculating the autocorrelation function
+```{r}
+I =1000
+#I = 100
+J = 10
+# I=10
+# J=10
+diff <- matrix(0, I, J)
+diffB <- matrix(0, I, J)
+it1 <- matrix(0, I, J)
+it2 <- matrix(0, I, J)
+for(i in 1:I){
+  it <- matrix(0, ncol=2, nrow=J)
+
+  it[1,] <- 1/rgamma(2, shape = alpha, rate = beta)
+
+  Z <- rnorm(p, 0, 1)
+  beta1 <- BetaIt(it[1,1], Z)
+  beta2 <- BetaIt(it[1,2], Z)
+  diffB[i,1] <- sum(abs(beta1-beta2))
+  for(j in 2:J){
+    Z <- rnorm(p, 0, 1)
+    G <- rgamma(1, shape = alpha, rate =1)
+    it[j,1] <- nextIt(it[j-1,1], Z, G)
+    it[j,2] <- nextIt(it[j-1,2], Z, G)
+
+    #Calculate beta
+    #Z <- rnorm(p, 0, 1)
+    beta1 <- BetaIt(it[j,1], Z)
+    beta2 <- BetaIt(it[j,2], Z)
+    diffB[i,j] <- sum(abs(beta1-beta2))
+  }
+
+
+  it1[i,] <- it[,1]
+  #it2[i,] <- it[,2]
+}
+```
+
+```{r}
+save(it1, file = "it1_BayesReg.RData")
+```
+
+```{r}
+load('it1_BayesReg.RData')
+```
+
+
+```{r}
+lagmax <- rep(0, dim(it1)[1])
+for (i in 1:length(lagmax)){
+  dfacf <- acf(it1[i,], main="Auto correlation function",  plot=FALSE)
+ lagmax[i] <- min(dfacf$lag[dfacf$acf<0.01])
+}
+```
+
+```{r}
+data.frame(lagmax) %>% 
+  filter(lagmax != Inf) %>% 
+  ggplot(aes(x=lagmax)) + geom_histogram(binwidth = 1)
+```
+```{r}
+length(lagmax[lagmax<=10])
+```
+```{r}
+lagmax[lagmax>10]
+```
+
+
+```{r}
+dfacf <- acf(it1[1,], main="Auto correlation function",  plot=FALSE)
+ lagmax <- min(dfacf$lag[dfacf$acf<0.01])
+ lagmax
+ acf(it1[1,], main="Auto correlation function for run 1", lag.max = lagmax)
+```

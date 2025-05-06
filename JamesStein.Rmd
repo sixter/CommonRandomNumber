@@ -1,0 +1,293 @@
+---
+title: "JamesStein"
+output: html_document
+date: "2025-03-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pscl)
+library(tidyverse)
+library(invgamma)
+library(latex2exp)
+library(cubature)
+```
+
+## James Stein Gibbs sampler
+
+```{r}
+data(EfronMorris)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+Y <- EfronMorris$y
+V <- var(Y)
+
+# priors
+a = 0.01
+b <- 2
+
+k <- length(Y)
+```
+
+```{r}
+nextIt <- function(x, Z, Z_mu, G){
+  # updating theta
+  x[,thetanames] <- (Y*x$A+x$mu*V)/(x$A+V)+ sqrt((V*x$A)/(V+x$A))*Z
+  # updating A
+  x$A <- (sum((x[,thetanames]-x$mu)^2)/2+b)*G
+  # updating mu
+  x$mu <- sum(x[,thetanames])/k+sqrt(x$A/k)*Z_mu
+  return(x)
+}
+```
+
+```{r}
+# I = 1000
+# J = 20
+# 
+# diff <- matrix(0, I, J)
+# it1 <- data.frame(cbind(sort(rep(1:I,J)), rep(1:J,I), matrix(0, I*J, k+2)))
+# it2 <- data.frame(cbind(sort(rep(1:I,J)), rep(1:J,I), matrix(0, I*J, k+2)))
+# thetanames <- c(paste("theta", 1:k, sep = ""))
+# vnames <- c("A","mu",thetanames)
+# cnames <- c("sim_no","it", vnames)
+# colnames(it1) <- cnames
+# colnames(it2) <- cnames
+# 
+# for(i in 1:I){
+#   
+# #initializing the chains. it1~nu and it2
+#   it1[it1$it==1 & it1$sim_no==i,paste("theta", 1:k, sep = "")] <- rnorm(k,Y,V)
+#   it1[it1$it==1 & it1$sim_no==i,"mu"] <- rnorm(1,0,10^6) # the initial dist is assumed flat
+#   it1[it1$it==1 & it1$sim_no==i,"A"] <- rinvgamma(1,a+k/2,b)
+#   
+#   it2[it1$it==1 & it1$sim_no==i, c("A","mu",paste("theta", 1:k, sep = ""))] <- rep(mean(Y),k+2)
+#   
+#   for(j in 2:J){
+#     Z <- rnorm(k, 0, 1)
+#     Z_mu <- rnorm(1,0,1)
+#     G <- rinvgamma(1, shape = a+(k-1)/2, 1)
+#     it1[it1$it==j & it1$sim_no==i,vnames] <-
+#       nextIt(it1[it1$it==(j-1) & it1$sim_no==i,vnames], Z, Z_mu, G)
+#     it2[it1$it==j & it1$sim_no==i,vnames] <-
+#       nextIt(it2[it1$it==(j-1) & it1$sim_no==i,vnames], Z, Z_mu, G)
+#   }
+# }
+```
+
+```{r}
+# it1_long <- it1 %>% 
+#   pivot_longer("A":"theta18",names_to="par", values_to="val")
+# it2_long <- it2 %>% 
+#   pivot_longer("A":"theta18",names_to="par", values_to="val")
+# diff <- merge(it1_long, it2_long, by=c("it","sim_no","par")) %>% 
+#   mutate(diff = val.x-val.y)
+```
+
+```{r}
+# save(diff, file = "diff_JamesStein.RData")
+```
+
+```{r}
+load('diff_JamesStein.RData')
+```
+
+
+```{r}
+diff_sum <- diff %>%
+  group_by(it, sim_no) %>% 
+  summarise(diff=sum(abs(diff)))
+
+diff_sum %>% 
+  group_by(it) %>% 
+  summarize(mean_val = mean(diff), max_val = max(diff), min_val = min(diff))
+```
+
+```{r}
+diff_sum %>%
+  group_by(it) %>% 
+  summarize(mean_val = mean(abs(diff)), max_val = max(abs(diff)), min_val = min(abs(diff)),lq_val =  quantile(diff, probs = c(0.25)), uq_val = quantile(diff, probs = c(0.75))) %>% 
+  ggplot(aes(x = it), ylim=c(0,10^6)) + 
+  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "grey70", alpha=0.5) + 
+  geom_ribbon(aes(ymin = lq_val, ymax = uq_val), fill = "grey70", alpha=0.75) + 
+  scale_y_log10() +
+  geom_line(aes(y = mean_val)) + geom_hline(yintercept=0.01) +
+  theme(legend.position = "none") +
+  #labs(title = TeX("Value of $||(\\theta_n,\\mu_n,A_n)-(\\theta'_n,\\mu'_n,A'_n)||_1$"), subtitle = "Based on 1000 simulations") +
+  xlab("n=iteration") + ylab(TeX("Logscale of $||(\\theta_n,\\mu_n,A_n)-(\\theta'_n,\\mu'_n,A'_n)||_1$"))
+```
+
+## Find the constant $K$ from theorem 4.4
+
+```{r}
+sup_ratio <- 1/(2*pi)^(k/2)
+sup_ratio
+```
+```{r}
+dlognorm <- function(x, m, sd){
+  return(-0.5*log(2*pi*sd^2)-(x-m)^2/(2*sd^2))
+}
+
+dloginvgamma <- function(x, a, b){
+  return(a*log(b)-log(gamma(a))-(a+1)*log(x)-b/x)
+}
+```
+
+```{r}
+logf <- function(x, Y_val=Y, para=par){
+  A <- x[1]; mu <- x[2]; theta <- x[3:length(x)]
+  if  (A<=0 ){
+    return(0)
+  }
+  a <- para[1]; b <- para[2];
+  
+  f_A <- dloginvgamma(A, a, b)
+  
+  f_u <- 0;
+  for(i in 1:length(theta)){
+    f_u <- f_u + dlognorm(mu, theta[i], sqrt(A))
+    #f_theta <- f_theta + dlognorm(Y[1], theta[1], sqrt(V))
+    #f_theta <- dlognorm(Y[1], theta[1], sqrt(V))
+  }
+  
+  f_theta <- 0;
+  for(i in 1:length(theta)){
+    #f_theta <- f_theta + dlognorm(Y[i], theta[i], sqrt(V))
+    f_theta <- dlognorm(Y_val[i], theta[i], sqrt(V))
+  }
+  
+  logf <- f_A+f_u+f_theta
+  if (logf == -Inf){
+    return(0)
+  }
+  else{
+    return(logf) 
+  }
+}
+```
+
+
+```{r}
+# # The initial value of x is 
+# x <- c(b/(a+1), rep(mean(Y),k+1))
+# par <- c(a,b)
+# int1 <- adaptIntegrate(logf, lowerLimit = x-rep(0.47, length(x)), upperLimit = x+rep(0.47, length(x)))
+```
+
+```{r}
+# save(int1, file = "int1_JamesStein.RData")
+```
+
+```{r}
+load('int1_JamesStein.RData')
+```
+
+```{r}
+int1_val <- int1$integral-int1$error
+
+L=exp(int1_val)
+L
+```
+According to equation 15, an upper bound on K is as follows,
+```{r}
+K <- log(sup_ratio)-int1_val
+K <- exp(K)
+K
+```
+
+```{r}
+diff_sum %>%
+  mutate(diff = diff*K) %>% 
+  group_by(it) %>% 
+  summarize(mean_val = mean(abs(diff)), max_val = max(abs(diff)), min_val = min(abs(diff)), lq_val =  quantile(diff, probs = c(0.25)), uq_val = quantile(diff, probs = c(0.75))) %>% 
+  ggplot(aes(x = it), ylim=c(0,10^6)) + 
+  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "grey70", alpha=0.5) + 
+  geom_ribbon(aes(ymin = lq_val, ymax = uq_val), fill = "grey70", alpha=0.750) +
+  scale_y_log10() +
+  geom_line(aes(y = mean_val), size=1) + geom_hline(yintercept=0.01) +
+  theme(legend.position = "none") +
+  #labs(title = TeX("Value of $||(\\theta_n,\\mu_n,A_n)-(\\theta_{\\infty},\\mu_{\\infty},A_{\\infty})||_1$"), subtitle = "Based on 1000 simulations") +
+  xlab("n=iteration") + ylab(TeX("Logscale of $K||(\\theta_n,\\mu_n,A_n)-(\\theta_{\\infty},\\mu_{\\infty},A_{\\infty})||_1$"))
+```
+
+
+```{r}
+first_hit <- diff_sum %>%
+  mutate(diff =diff*K) %>% 
+  group_by(it) %>% 
+  summarize(mean_val = mean(diff)) %>% 
+  filter(mean_val<=0.01) %>% 
+  summarise(first_hit=min(it))
+
+first_hit <- first_hit$first_hit
+```
+```{r}
+diff_sum %>%
+  group_by(it) %>% 
+  summarize(mean_val = mean(abs(diff)*K), max_val = max(abs(diff)*K), min_val = min(abs(diff)*K)) %>% 
+  filter(it==first_hit)
+```
+Calculate bound on total variation
+```{r}
+S <- sum((Y-mean(Y))^2)
+
+M <- (S/2)^((k-1)/2)/gamma((k-1)/2)*(S/(k+1))^(-(k-3)/2)*exp(-(k+1)/2)
+M
+M*K
+```
+
+Comparing our bound to the other bounds outlined in table 1.
+```{r}
+diff_sum %>%
+  group_by(it) %>% 
+  summarize(crn_val = mean(diff*K*M))
+```
+```{r}
+#initializing the chains. it1~nu and it2
+mean(abs((rinvgamma(1000,a+k/2,b)-rep(mean(Y),1000))))
+```
+
+```{r}
+meandiff1 <- mean(abs((rinvgamma(1000,a+k/2,b)-rep(mean(Y),1000))))
+
+it <- 1:138
+dnm_val <- 0.967^(it)+1.17*0.935^(it)
+oneshot_val <- M*meandiff1*(1/18)^(it-1)
+
+head(data.frame(dnm_val,oneshot_val),n=10)
+```
+
+```{r}
+diff_sum %>%
+  group_by(it) %>% 
+  summarize(crn_val = mean(abs(diff))) %>% 
+  filter(it<11)
+```
+```{r}
+it <- 138
+0.967^(it)+1.17*0.935^(it)
+```
+
+```{r}
+mean_it <- diff %>% 
+  group_by(it) %>% 
+  mutate(diff=mean(abs(diff))) %>% 
+  filter(it==1)
+
+mean(mean_it$diff)
+```
+```{r}
+mean_it <- diff %>% 
+  filter(par=='A') %>% 
+  group_by(it) %>% 
+  mutate(diff=mean(abs(diff))) %>% 
+  filter(it==1)
+
+mean(mean_it$diff)
+```
+

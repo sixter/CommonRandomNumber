@@ -1,0 +1,1227 @@
+---
+title: "CommonRandomNumber3"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-02-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(matlib)
+library(cubature)
+library(latex2exp)
+library(ggplot2)
+library(MCMCpack)
+library(coda)
+```
+
+The following code generated the graphs and calculations found in "Applying the common random number technique as a Markov chain convergence diagnostic."
+
+## Bayesian Regression Gibbs Sampler
+
+Numerical example
+```{r}
+# Data is obtained from the general linear models textbook by Dobson
+#Table 6.3 Carbohydrate, age, relative weight and protein for twenty male insulin dependent diabetics; for units, see text (data from K. Webb, personal communication).
+
+df <- c(33, 33, 100, 14,
+40, 47, 92, 15,
+37, 49, 135, 18,
+27, 35, 144, 12,
+30, 46, 140, 15,
+43, 52, 101, 15,
+34, 62, 95, 14,
+48, 23, 101, 17,
+30, 32, 98, 15,
+38, 42, 105, 14,
+50, 31, 108, 17,
+51, 61, 85, 19,
+30, 63, 130, 19,
+36, 40, 127, 20,
+41, 50, 109, 15,
+42, 64, 107, 16,
+46, 56, 117, 18,
+24, 61, 100, 13,
+35, 48, 118, 18,
+37, 28, 102, 14)
+
+df <- matrix(df, nrow = 20, byrow=TRUE)
+
+Y <- df[,1]
+X <- cbind(1,df[,-1])
+n <- length(Y)
+p <- dim(X)[2]
+
+df <- data.frame(df)
+colnames(df) <- c("carbs", "age", "weight", "protein")
+```
+
+```{r}
+# setting priors: beta ~ N(b_0,E_0) sigma^2 ~ Inv-Chi^2(v_0, c_0)
+b_0 <- rep(0,4)
+E_0 <- diag(4)
+v_0 <- 1
+#v_0 <- 5
+#c_0 <- 6
+c_0 <- 10
+```
+
+Consistent with equation (18) we define 
+$$g(\beta,\sigma^2) =  \frac{1}{(\sigma^2)^{(n+\upsilon_0)/2+1}}\exp\left(-\frac{1}{2\sigma^2} (y-X\beta)^T(y-X\beta) -\frac{1}{2}(\beta-\beta_0)^T\Sigma_{\beta}^{-1} (\beta-\beta_0) -\frac{\upsilon_0 c_0^2}{\sigma^2}\right)$$
+We further define 
+$$f(\beta,\sigma^2) = \log(g(\beta,\sigma^2))$$
+
+
+```{r}
+# g(x,y)= g(beta,sigma^2) as defined in equation 6
+g <- function(x){ 
+  b <- c(x[1], x[2], x[3], x[4])
+  o <- x[5]
+  z = exp(-((n+v_0)/2+1)*log(o) - 1/(2*o)*t(Y-(X %*% b)) %*% (Y-(X %*% b)) - 0.5*t(b-b_0) %*% inv(E_0) %*% (b-b_0) - v_0*c_0/o)
+  return(z)}
+
+f <- function(x){ 
+  b <- c(x[1], x[2], x[3], x[4])
+  o <- x[5]
+  z = -((n+v_0)/2+1)*log(o) - 1/(2*o)*t(Y-(X %*% b)) %*% (Y-(X %*% b)) - 0.5*t(b-b_0) %*% inv(E_0) %*% (b-b_0) - v_0*c_0/o
+  return(-z)
+  }
+```
+
+We want to find a lower bound ($L$) on $\int_{\mathbb{R}^4\times \mathbb{R}}g(\beta,\sigma^2)d(\beta,\sigma^2)$. To do so, we apply the following,
+
+$\int_{\mathbb{R}^4\times \mathbb{R}}g(\beta,\sigma^2)d(\beta,\sigma^2)\geq \int_{C}g(\beta,\sigma^2)d(\beta,\sigma^2)\geq e^{\int_{C}f(\beta,\sigma^2)d(\beta,\sigma^2)}$
+
+```{r}
+x <- c(0.1,0.1,0.1,0.1,0.1)
+x <- optim(x, f)$par
+#c(0.1,0.1,0.1,0.1,0.1)
+#c(0.2,0.2,0.2,0.2,0.2)
+int_f <- adaptIntegrate(f, lowerLimit = x-c(0.1,0.1,0.1,0.1,0.1), upperLimit = x+c(0.1,0.1,0.1,0.1,0.1))
+int_f
+```
+
+```{r}
+L <- exp(-int_f$integral)
+L
+```
+```{r}
+alpha <- (n+v_0)/2
+beta <- v_0*c_0/2
+K <- 1/L*gamma(alpha)/beta^alpha #*(2*pi)^(p/2)
+K
+tvbound <- (n+v_0)^2/(2*v_0*c_0)
+tvbound
+```
+The following is function that generates $\sigma^2_{n+1}$ given $\sigma^2_n$, equation 19.
+
+```{r}
+b_hat <- inv(t(X) %*% X) %*% t(X) %*%  Y
+invE_0 <- inv(E_0)
+nextIt <- function(o, Z, G){
+  eigenV <- eigen(t(X) %*% X/o + inv(E_0))
+  Q <- eigenV$vectors
+  L <- diag(eigenV$values)
+  Vinv12 <-  Q %*% inv(sqrt(L)) %*% inv(Q)
+  Vinv <-  Q %*% inv(L) %*% inv(Q)
+  b_tilde <- Vinv %*% (t(X) %*% X %*% b_hat/o + inv(E_0) %*% b_0)
+  W <- X %*% b_tilde - Y + X %*% Vinv12 %*% Z
+  o1 <- (v_0*c_0/2 +(t(W) %*% W)/2)/G
+  return(o1)
+}
+
+```
+
+The following is a function that generates $\beta_n$ from $\sigma_n^2$
+```{r}
+BetaIt <- function(o, Z){
+  eigenV <- eigen(t(X) %*% X/o + inv(E_0))
+  Q <- eigenV$vectors
+  L <- diag(eigenV$values)
+  Vinv <-  Q %*% inv(L) %*% inv(Q)
+  Vinv12 <-  Q %*% inv(sqrt(L)) %*% inv(Q)
+  b_tilde <- Vinv %*% (t(X) %*% X %*% b_hat/o + inv(E_0) %*% b_0)
+  b <- b_tilde + Vinv12 %*% Z
+  return(b)
+}
+```
+
+Now we apply the common random number technique to generate an estimate of $E[|X_k-Y_k|]$, $N=100$ $I=1000$ and $X_0,Y_0\sim \Gamma^{-1}(\alpha',\beta')=\Gamma^{-1}(10.5,2)$
+
+```{r}
+I = 1000
+#I = 100
+J = 100
+# I=10
+# J=10
+diff <- matrix(0, I, J)
+diffB <- matrix(0, I, J)
+it1 <- matrix(0, I, J)
+it2 <- matrix(0, I, J)
+for(i in 1:I){
+  it <- matrix(0, ncol=2, nrow=J)
+
+  # it[1,] <- 1/rgamma(2, shape = alpha, rate = beta)
+  it[1,] <- c(1/rgamma(1, shape = alpha, rate = beta), 100)
+  
+  Z <- rnorm(p, 0, 1)
+  beta1 <- BetaIt(it[1,1], Z)
+  beta2 <- BetaIt(it[1,2], Z)
+  diffB[i,1] <- sum(abs(beta1-beta2))
+  for(j in 2:J){
+    Z <- rnorm(p, 0, 1)
+    G <- rgamma(1, shape = alpha, rate =1)
+    it[j,1] <- nextIt(it[j-1,1], Z, G)
+    it[j,2] <- nextIt(it[j-1,2], Z, G)
+    
+    #Calculate beta
+    #Z <- rnorm(p, 0, 1)
+    beta1 <- BetaIt(it[j,1], Z)
+    beta2 <- BetaIt(it[j,2], Z)
+    diffB[i,j] <- sum(abs(beta1-beta2))
+  }
+  
+  diff[i,] <- abs(it[,1]-it[,2])
+  #it1[i,] <- it[,1]
+  #it2[i,] <- it[,2]
+}
+```
+
+```{r}
+# diff_old <- diff
+# diff <- diff[1:i-1,]
+```
+
+
+
+```{r}
+diff_df <- data.frame(t(diff), iter_no = 1:J)
+diff_df <- diff_df %>% 
+  pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val") 
+
+diffB_df <- data.frame(t(diffB), iter_no = 1:J)
+diffB_df <- diffB_df %>% 
+  pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val") 
+
+diff_df <- diff_df %>% left_join(diffB_df, by=c("iter_no","sim_no"))
+names(diff_df) <- c("iter_no", "sim_no", "o", "b")
+diff_df <- diff_df %>% mutate(val = o+b)
+```
+
+```{r}
+# diff_df <- data.frame(t(diff), iter_no = 1:J)
+# diff_df <- diff_df %>% 
+#   pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val") 
+diff_df %>% 
+  ggplot(aes(x = iter_no, y = val)) + 
+  geom_line(aes(color = sim_no)) + theme(legend.position = "none") +
+  labs(title = "1000 simulations of |X_n-X'_n|", subtitle = "Using common random number technique") +
+  xlab("iteration") + ylab("diff = |X_n-X'_n|")
+```
+```{r}
+expdiff <- diff_df %>%
+  filter(iter_no==25) %>%
+  summarise(expdiff = mean(val))
+
+expdiff
+```
+
+```{r}
+diff_df %>% 
+  filter(iter_no==25) %>% 
+  ggplot(aes(x=val)) + 
+  geom_histogram() + labs(title = "Histogram of |X_n-Y_n|", subtitle = "At iteration = 25") +
+  xlab("|X_n-Y_n|") +
+  geom_vline(aes(xintercept = expdiff$expdiff), colour="black")
+  #geom_vline(xintercept = expdiff)
+```
+
+```{r}
+diff_df %>% 
+  group_by(iter_no) %>% 
+  summarise(mean_val = mean(val), max_val = max(val), min_val = min(val)) %>% 
+  ggplot(aes(x = iter_no)) + 
+  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "grey70") +
+  geom_line(aes(y = mean_val)) + 
+  theme(legend.position = "none") +
+  #labs(title = TeX("Value of $||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"), subtitle = "Based on 1000 simulations") +
+  xlab("n=iteration") + ylab(TeX("$||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"))
+```
+
+```{r}
+expdiff <- diff_df %>%
+  filter(iter_no==10) %>%
+  summarise(expdiff = mean(val))
+expdiff
+expdiff*K
+```
+
+```{r}
+expdiff_o <- diff_df %>%
+  filter(iter_no==10) %>%
+  summarise(expdiff = mean(o))
+
+expdiff_o
+```
+
+```{r}
+expdiff_o*K*tvbound
+```
+
+
+## Bound comparison
+
+
+```{r}
+# Calculation of the Gelman Rubin diagnostic.
+it_init <- seq(5,1000, by =50)
+I = length(it_init)
+
+J = 100
+
+diff <- matrix(0, I, J)
+diffB <- matrix(0, I, J)
+it1 <- matrix(0, I, J)
+it2 <- matrix(0, I, J)
+for(i in 1:I){
+  it <- matrix(0, ncol=2, nrow=J)
+
+  it[1,] <- it_init[i]
+  
+  Z <- rnorm(p, 0, 1)
+  beta1 <- BetaIt(it[1,1], Z)
+  beta2 <- BetaIt(it[1,2], Z)
+  diffB[i,1] <- sum(abs(beta1-beta2))
+  for(j in 2:J){
+    Z <- rnorm(p, 0, 1)
+    G <- rgamma(1, shape = alpha, rate =1)
+    it[j,1] <- nextIt(it[j-1,1], Z, G)
+    it[j,2] <- nextIt(it[j-1,2], Z, G)
+    
+    # #Calculate beta
+    # #Z <- rnorm(p, 0, 1)
+    # beta1 <- BetaIt(it[j,1], Z)
+    # beta2 <- BetaIt(it[j,2], Z)
+    # diffB[i,j] <- sum(abs(beta1-beta2))
+  }
+  
+  it1[i,] <- it[,1]
+}
+
+it_list <- list(mcmc(it1[1,]), mcmc(it1[2,]), mcmc(it1[3,]), mcmc(it1[4,]), mcmc(it1[5,]), mcmc(it1[6,]), mcmc(it1[7,]), mcmc(it1[8,]), mcmc(it1[9,]), mcmc(it1[10,]), mcmc(it1[11,]), mcmc(it1[12,]), mcmc(it1[13,]), mcmc(it1[14,]), mcmc(it1[15,]), mcmc(it1[16,]), mcmc(it1[17,]), mcmc(it1[18,]), mcmc(it1[19,]), mcmc(it1[20,]))
+# it_list <- append(it_list, mcmc(it1[2,]))
+gelman.diag(it_list,transform=TRUE)
+```
+```{r}
+gelman.plot(it_list)
+```
+```{r}
+traceplot(it_list)
+```
+
+
+## Calculating the autocorrelation function
+```{r}
+I =1000
+#I = 100
+J = 100
+# I=10
+# J=10
+diff <- matrix(0, I, J)
+diffB <- matrix(0, I, J)
+it1 <- matrix(0, I, J)
+it2 <- matrix(0, I, J)
+for(i in 1:I){
+  it <- matrix(0, ncol=2, nrow=J)
+
+  it[1,] <- 1/rgamma(2, shape = alpha, rate = beta)
+  
+  Z <- rnorm(p, 0, 1)
+  beta1 <- BetaIt(it[1,1], Z)
+  beta2 <- BetaIt(it[1,2], Z)
+  diffB[i,1] <- sum(abs(beta1-beta2))
+  for(j in 2:J){
+    Z <- rnorm(p, 0, 1)
+    G <- rgamma(1, shape = alpha, rate =1)
+    it[j,1] <- nextIt(it[j-1,1], Z, G)
+    it[j,2] <- nextIt(it[j-1,2], Z, G)
+    
+    #Calculate beta
+    #Z <- rnorm(p, 0, 1)
+    beta1 <- BetaIt(it[j,1], Z)
+    beta2 <- BetaIt(it[j,2], Z)
+    diffB[i,j] <- sum(abs(beta1-beta2))
+  }
+  
+  
+  it1[i,] <- it[,1]
+  #it2[i,] <- it[,2]
+}
+```
+
+```{r}
+dim(it1)
+```
+```{r}
+lagmax <- rep(0, dim(it1)[1])
+for (i in 1:length(lagmax)){
+  dfacf <- acf(it1[i,], main="Auto correlation function",  plot=FALSE)
+ lagmax[i] <- min(dfacf$lag[dfacf$acf<0.01])
+}
+```
+```{r}
+data.frame(lagmax)
+```
+
+```{r}
+#hist(lagmax)
+data.frame(lagmax) %>% 
+  filter(lagmax != Inf) 
+
+data.frame(lagmax) %>% 
+  filter(lagmax != Inf) %>% 
+  ggplot(aes(x=lagmax)) + geom_histogram(binwidth = 1)
+```
+```{r}
+length(lagmax[lagmax<=10])
+```
+```{r}
+lagmax[lagmax>10]
+```
+
+
+```{r}
+dfacf <- acf(it1[1,], main="Auto correlation function",  plot=FALSE)
+ lagmax <- min(dfacf$lag[dfacf$acf<0.01])
+ lagmax
+ acf(it1[1,], main="Auto correlation function for run 1", lag.max = lagmax)
+```
+
+
+<!-- #Variance Component Model Gibbs Sampler -->
+
+<!-- The following is the data of interest. The rows represent the batches of which there are 6 in total. Each batch contains 5 elements. -->
+<!-- ```{r} -->
+<!-- # Matrix giving the famous "dyestuff" batch data from Davies (1967). -->
+<!-- # Defined so Ydye[i,j] equals yield (in grams) from j'th sample of i'th batch. -->
+<!-- # Valid for i=1,2,3,4,5,6, and j=1,2,3,4,5, i.e. I=6 and J=5. -->
+
+<!-- Ydye = t( matrix( -->
+<!-- 	c(1545, 1440, 1440, 1520, 1580, -->
+<!--          1540, 1555, 1490, 1560, 1495, -->
+<!--          1595, 1550, 1605, 1510, 1560, -->
+<!--          1445, 1440, 1595, 1465, 1545, -->
+<!--          1595, 1630, 1515, 1635, 1625, -->
+<!--          1520, 1455, 1450, 1480, 1445), nrow=5) ) -->
+
+<!-- J <- dim(Ydye)[2] # number of samples in each batch -->
+<!-- I <- dim(Ydye)[1] # number of batches -->
+<!-- ``` -->
+
+<!-- The following code runs a Gibbs sampler for the model. -->
+
+<!-- ```{r} -->
+<!-- gibbs_update_u <- function(x, z = rnorm(1,0,1)){ -->
+<!--   a <- (a3*x[1]+b3*sum(x[4:(3+I)]))/(x[1]+I*b3) -->
+<!--   b <- sqrt(b3*x[1]/(x[1] + I*b3)) -->
+<!--   x[3] <- a + b*z -->
+<!--   return(x) -->
+<!-- } -->
+
+<!-- gibbs_update_theta <- function(x, z = rnorm(I,0,1)){ -->
+<!--   a <- (x[3]/x[1]+apply(Ydye, MARGIN = 1, FUN = sum)/x[2])/(1/x[1]+J/x[2]) -->
+<!--   b <- sqrt(1/(1/x[1] + J/x[2])) -->
+<!--   b <- sqrt(x[1]*x[2]/(x[2] + J*x[1])) -->
+<!--   x[4:(3+I)]  <- a + b * z -->
+<!--   return(x) -->
+<!-- } -->
+
+<!-- gibbs_update_V <- function(x, g = rgamma(1, shape = a1+I/2, rate = 1)){ -->
+<!--   b <- b1 +sum((x[4:(3+I)]-x[3])^2)/2 -->
+<!--   x[1]  <- b/g -->
+<!--   return(x) -->
+<!-- } -->
+
+<!-- gibbs_update_W <- function(x, g = rgamma(1, shape = a2+I*J/2, rate = 1)){ -->
+<!--   b <- b2 +sum((Ydye-x[4:(3+I)])^2)/2 -->
+<!--   x[2]  <- b/g -->
+<!--   return(x) -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- Generate the initial value of $Y_0\sim \nu$ -->
+<!-- ```{r} -->
+<!-- par <- c(6, 6, 6, 6, 1600, 1600) -->
+
+<!-- a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6]; -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- M <- 10000 # number of iterations  -->
+
+<!-- X <- c(100,200,900,rep(900,I)) -->
+<!-- X_init <- X -->
+
+<!-- V <- rinvgamma(1, a1, b1-1) -->
+<!-- W <- rinvgamma(1, a2, b2-1) -->
+<!-- u <- rnorm(1, a3, sqrt(b3)) -->
+<!-- theta <- rnorm(I, apply(Ydye,2,mean), W/J) -->
+<!-- Y <- c(V[1], W[1], u[1], theta) -->
+<!-- Y_init <- Y -->
+
+<!-- df_X <- data.frame(t(c(X,0,0))) -->
+<!-- df_Y <- data.frame(t(c(Y,0,0))) -->
+<!-- colnames(df_X) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter") -->
+<!-- colnames(df_Y) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter") -->
+
+<!-- #a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6]; -->
+
+<!-- for (i in 1:M) { -->
+<!--     for (coord in 1:4){ -->
+<!--       if (coord == 3) { # Modify coordinate u -->
+<!--         z = rnorm(1,0,1) -->
+<!--         X <- gibbs_update_u(X, z) -->
+<!--         Y <- gibbs_update_u(Y, z) -->
+<!--       } -->
+<!--       else if (coord == 4) { # Modify all K thetas -->
+<!--         z = rnorm(I,0,1) -->
+<!--         X <- gibbs_update_theta(X, z) -->
+<!--         Y <- gibbs_update_theta(Y, z) -->
+<!--       } -->
+<!--       else if (coord == 1) { # Modify coordinate V -->
+<!--         g = rgamma(1, shape = a1+I/2, rate = 1) -->
+<!--         X <- gibbs_update_V(X, g) -->
+<!--         Y <- gibbs_update_V(Y, g) -->
+<!--       } -->
+<!--       else if (coord == 2) { # Modify coordinate W -->
+<!--         g = rgamma(1, shape = a2+I*J/2, rate = 1) -->
+<!--         X <- gibbs_update_W(X,g) -->
+<!--         Y <- gibbs_update_W(Y,g) -->
+<!--       } -->
+<!--       df_X <- rbind(df_X,c(X, coord, i)) -->
+<!--       df_Y <- rbind(df_Y,c(Y, coord, i)) -->
+<!--     } -->
+<!-- } -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- df_X %>% -->
+<!--   filter(iter>9000, coord==1) %>%  -->
+<!--   ggplot(aes(x = iter, y = theta1)) + -->
+<!--   geom_line() + labs(title="theta1") -->
+
+<!-- df_X %>% -->
+<!--   filter(iter>9000, coord==1) %>%  -->
+<!--   ggplot(aes(x = iter, y = mu)) + -->
+<!--   geom_line() + labs(title="mu") -->
+
+<!-- df_X %>% -->
+<!--   filter(iter>9000, coord==1) %>%  -->
+<!--   ggplot(aes(x = iter, y = V)) + -->
+<!--   geom_line() + labs(title="V") -->
+
+<!-- df_X %>% -->
+<!--   filter(iter>9000, coord==1) %>%  -->
+<!--   ggplot(aes(x = iter, y = W)) + -->
+<!--   geom_line() + labs(title="W") -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- df_X %>% -->
+<!--   filter(iter>25, coord==1) %>%  -->
+<!--   ggplot(aes(x = iter, y = theta1)) + -->
+<!--   geom_line() + labs(title="theta1") -->
+
+<!-- df_X %>% -->
+<!--   filter(iter>25, coord==1) %>%  -->
+<!--   ggplot(aes(x = iter, y = mu)) + -->
+<!--   geom_line() + labs(title="mu") -->
+
+<!-- df_X %>% -->
+<!--   filter(iter>25, coord==1) %>%  -->
+<!--   ggplot(aes(x = iter, y = V)) + -->
+<!--   geom_line() + labs(title="V") -->
+
+<!-- df_X %>% -->
+<!--   filter(iter>25, coord==1) %>%  -->
+<!--   ggplot(aes(x = iter, y = W)) + -->
+<!--   geom_line() + labs(title="W") -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- df_X1 <- df_X %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "X") -->
+<!-- df_Y1 <- df_Y %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "Y") -->
+
+<!-- df <- left_join(df_X1, df_Y1, by=c('coord','iter','names')) -->
+<!-- df <- df %>% mutate(diff = X-Y) -->
+
+<!-- df_diff <- df %>% -->
+<!--   filter(coord ==1) %>% -->
+<!--   group_by(iter) %>% -->
+<!--   summarise(diff = sum(abs(diff))) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- df_diff %>% -->
+<!--   filter(iter>2) %>% -->
+<!--   ggplot(aes(x = iter, y = diff)) + -->
+<!--   geom_line() + labs(title = "Value of |X-Y|", subtitle = "Using common random number technique") + -->
+<!--   xlab("iteration") + ylab("value") -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #par <- c(6, 6, 6, 6, 1600, 1600) -->
+
+<!-- simVCM <- function(){ -->
+<!--   a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6]; -->
+
+<!--   V <- rinvgamma(1, a1, b1-1) -->
+<!--   W <- rinvgamma(1, a2, b2-1) -->
+<!--   u <- rnorm(1, a3, sqrt(b3)) -->
+<!--   theta <- rnorm(I, apply(Ydye,2,mean), W/J) -->
+<!--   Y <- c(V[1], W[1], u[1], theta) -->
+<!--   Y_init <- Y -->
+
+<!--   M <- 10000 -->
+<!--   X <- c(100,200,900,rep(900,I)) -->
+<!--   X_init <- X -->
+
+<!--   df_X <- data.frame(t(c(X,0,0))) -->
+<!--   df_Y <- data.frame(t(c(Y,0,0))) -->
+<!--   colnames(df_X) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter") -->
+<!--   colnames(df_Y) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter") -->
+
+<!--   a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6]; -->
+
+<!--   for (i in 1:M) { -->
+<!--       for (coord in 1:4){ -->
+<!--         if (coord == 3) { # Modify coordinate u -->
+<!--           z = rnorm(1,0,1) -->
+<!--           X <- gibbs_update_u(X, z) -->
+<!--           Y <- gibbs_update_u(Y, z) -->
+<!--         } -->
+<!--         else if (coord == 4) { # Modify all I thetas -->
+<!--           z = rnorm(I,0,1) -->
+<!--           X <- gibbs_update_theta(X, z) -->
+<!--           Y <- gibbs_update_theta(Y, z) -->
+<!--         } -->
+<!--         else if (coord == 1) { # Modify coordinate V -->
+<!--           g = rgamma(1, shape = a1+I/2, rate = 1) -->
+<!--           X <- gibbs_update_V(X, g) -->
+<!--           Y <- gibbs_update_V(Y, g) -->
+<!--         } -->
+<!--         else if (coord == 2) { # Modify coordinate W -->
+<!--           g = rgamma(1, shape = a2+I*J/2, rate = 1) -->
+<!--           X <- gibbs_update_W(X,g) -->
+<!--           Y <- gibbs_update_W(Y,g) -->
+<!--         } -->
+<!--         df_X <- rbind(df_X,c(X, coord, i)) -->
+<!--         df_Y <- rbind(df_Y,c(Y, coord, i)) -->
+<!--       } -->
+<!--   } -->
+
+<!--   df_X1 <- df_X %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "X") -->
+<!--   df_Y1 <- df_Y %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "Y") -->
+
+<!--   df <- left_join(df_X1, df_Y1, by=c('coord','iter','names')) -->
+<!--   df <- df %>% mutate(diff = X-Y) -->
+
+<!--   df_diff <- df %>% -->
+<!--     filter(coord ==1) %>% -->
+<!--     group_by(iter) %>% -->
+<!--     summarise(diff = sum(abs(diff))) -->
+<!--   return(df_diff) -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- df_diff1 <- simVCM() -->
+<!-- df_diff2 <- simVCM() -->
+<!-- df_diff3 <- simVCM() -->
+<!-- df_diff4 <- simVCM() -->
+<!-- df_diff5 <- simVCM() -->
+<!-- df_diff6 <- simVCM() -->
+<!-- df_diff7 <- simVCM() -->
+<!-- df_diff8 <- simVCM() -->
+<!-- df_diff9 <- simVCM() -->
+<!-- df_diff10 <- simVCM() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- df_diff11 <- simVCM() -->
+<!-- df_diff12 <- simVCM() -->
+<!-- df_diff13 <- simVCM() -->
+<!-- df_diff14 <- simVCM() -->
+<!-- df_diff15 <- simVCM() -->
+<!-- df_diff16 <- simVCM() -->
+<!-- df_diff17 <- simVCM() -->
+<!-- df_diff18 <- simVCM() -->
+<!-- df_diff19 <- simVCM() -->
+<!-- df_diff20 <- simVCM() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- df_diff1 <- df_diff1 %>% mutate(sim_no='1') -->
+<!-- df_diff2 <- df_diff2 %>% mutate(sim_no='2') -->
+<!-- df_diff3 <- df_diff3 %>% mutate(sim_no='3') -->
+<!-- df_diff4 <- df_diff4 %>% mutate(sim_no='4') -->
+<!-- df_diff5 <- df_diff5 %>% mutate(sim_no='5') -->
+<!-- df_diff6 <- df_diff6 %>% mutate(sim_no='6') -->
+<!-- df_diff7 <- df_diff7 %>% mutate(sim_no='7') -->
+<!-- df_diff8 <- df_diff8 %>% mutate(sim_no='8') -->
+<!-- df_diff9 <- df_diff9 %>% mutate(sim_no='9') -->
+<!-- df_diff10 <- df_diff10 %>% mutate(sim_no='10') -->
+
+<!-- df_diff11 <- df_diff11 %>% mutate(sim_no='11') -->
+<!-- df_diff12 <- df_diff12 %>% mutate(sim_no='12') -->
+<!-- df_diff13 <- df_diff13 %>% mutate(sim_no='13') -->
+<!-- df_diff14 <- df_diff14 %>% mutate(sim_no='14') -->
+<!-- df_diff15 <- df_diff15 %>% mutate(sim_no='15') -->
+<!-- df_diff16 <- df_diff16 %>% mutate(sim_no='16') -->
+<!-- df_diff17 <- df_diff17 %>% mutate(sim_no='17') -->
+<!-- df_diff18 <- df_diff18 %>% mutate(sim_no='18') -->
+<!-- df_diff19 <- df_diff19 %>% mutate(sim_no='19') -->
+<!-- df_diff20 <- df_diff20 %>% mutate(sim_no='20') -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- df_diff_all <- rbind(df_diff1, df_diff2, df_diff3, df_diff4, df_diff5, df_diff6, df_diff7, df_diff8, df_diff9, df_diff10, df_diff11, df_diff12, df_diff13, df_diff14, df_diff15, df_diff16, df_diff17, df_diff1, df_diff19, df_diff20) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- df_diff_all %>% -->
+<!--   group_by(iter) %>% -->
+<!--   summarise(mean_diff = mean(diff), min_diff =  min(diff), max_diff = max(diff)) %>%  -->
+<!--   filter(iter>2) %>%   -->
+<!--   ggplot(aes(x = iter)) + -->
+<!--   geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "grey70") + -->
+<!--   geom_line(aes(y = mean_diff)) + -->
+<!--   labs(title = TeX("Value of $||X_n-X'_n||_1$"), subtitle = "Using common random number technique") + -->
+<!--   xlab(TeX("n=iteration")) + ylab(TeX("$||X_n-X'_n||_1$")) -->
+<!-- ``` -->
+
+
+<!-- Calculate $K$ for the variance component model. -->
+
+<!-- ## Find the constant $K$ from theorem 4.4 -->
+
+<!-- We want to find the constant $K$ that will bound the distance between $X_n$ and the corresponding stationary distribution. We will do so, by making use of equation 15, which writes that for an $L\leq \int_{\mathcal{X}} f(\vec{\theta}, v, w, \mu) dx$, -->
+
+<!-- $$K\leq \frac{1}{L}\sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)}$$ -->
+
+<!-- Step 1: Find an upper bound on $f/\nu$ -->
+
+<!-- Based on our calculations, the supremum of $\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)}$ is bounded as follows for $$C=\frac{1}{(2\pi)^{\sum_{i=1}^K J_i/2}} \frac{1}{(\prod_{i=1}^{K} J_i)^{1/2}}$$, -->
+
+<!-- \begin{align*} -->
+<!-- 	\sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)} &\leq C \left(\frac{1}{V^{K/2}}e^{-\frac{1}{2V}}\right) -->
+<!-- 	\left( \frac{1}{W^{(\sum_{i=1}^K J_i-K)/2}}e^{-\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{2W}} \right) \\ -->
+<!-- 	&= C \frac{\Gamma(K/2-1)}{0.5^{K/2+1}}\left(\frac{0.5^{K/2+1}}{\Gamma(K/2-1)}\frac{1}{V^{K/2}}e^{-\frac{1}{2V}}\right) -->
+<!-- 	\frac{\Gamma(a_W)}{b_W^{a_w}}\left( \frac{b_W^{a_w}}{\Gamma(a_W)} \frac{1}{W^{a_w+1}}e^{-\frac{b_W}{W}} \right) \\ -->
+<!-- \end{align*} -->
+
+<!-- Where $$a_W = (\sum_{i=1}^K J_i-K)/2 -1$$ and $$b_W=\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{2}$$ -->
+
+<!-- Since both of the functions for $V$ and $W$ are inverse gamma, the supremum occurs when $V^*=\frac{1}{2}\frac{1}{K/2-1}=\frac{1}{K-2}$ and $W^* = \frac{b_W}{a_W+1}=\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{\sum_{i=1}^K J_i-K}$. So that, -->
+
+<!-- \begin{align*} -->
+<!-- 	\sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)} &\leq C \frac{\Gamma(K/2-1)}{0.5^{K/2+1}}\left(\frac{0.5^{K/2+1}}{\Gamma(K/2-1)}\frac{1}{(V^*)^{K/2}}e^{-\frac{1}{2V^*}}\right) -->
+<!-- 	\frac{\Gamma(a_W)}{b_W^{a_w}}\left( \frac{b_W^{a_w}}{\Gamma(a_W)} \frac{1}{(W^*)^{a_w+1}}e^{-\frac{b_W}{W^*}} \right) \\ -->
+<!-- \end{align*} -->
+
+<!-- ```{r} -->
+<!-- a_w <- I*(J-1)/2-1 -->
+<!-- b_w <- 1 -->
+<!-- a_v <- I/2-1 -->
+<!-- b_v <- 1 -->
+
+<!-- V_star <- b_v/(a_v+1) -->
+<!-- W_star <- b_w/(a_w+1) -->
+
+<!-- C <- (b1/(b1-1))^a1*(b2/(b2-1))^a2*1/((2*pi)^(I*J/2)*J^(1/2)) -->
+
+<!-- sup_ratio <- C*gamma(a_v)/(b_v^a_v)*dinvgamma(V_star,a_v,b_v)* -->
+<!--   gamma(a_w)/(b_w^a_w)*dinvgamma(W_star,a_w,b_w) -->
+<!-- sup_ratio <- C*(exp(-b_v/V_star)/(V_star)^(a_v+1))*(exp(-b_w/W_star)/(W_star)^(a_w+1)) -->
+<!-- ``` -->
+
+
+<!-- Step 2: Find a lower bound on the unnormalized distribution function, $L$. -->
+
+
+<!-- ```{r} -->
+<!-- dlognorm <- function(x, m, sd){ -->
+<!--   return(-0.5*log(2*pi*sd^2)-(x-m)^2/(2*sd^2)) -->
+<!-- } -->
+
+<!-- dloginvgamma <- function(x, a, b){ -->
+<!--   return(a*log(b)-log(gamma(a))-(a+1)*log(x)-b/x) -->
+<!-- } -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- logf <- function(x, Y=Ydye, para=par){ -->
+<!--   V <- x[1]; W <- x[2]; mu <- x[3]; theta <- x[4:length(x)] -->
+<!--   if  (V<=0 || W<=0){ -->
+<!--     return(0) -->
+<!--   } -->
+<!--   a1 <- para[1]; b1 <- para[2]; a2 <- para[3]; b2 <- para[4]; a3 <- para[5]; b3 <- para[6]; -->
+
+<!--   f_v <- dloginvgamma(V, a1, b1) -->
+<!--   f_w <- dloginvgamma(W, a2, b2) -->
+<!--   f_u <- dlognorm(mu, a3, sqrt(b3)) -->
+
+<!--   f_theta <- 0 -->
+<!--   for (i in 1:length(theta)){ -->
+<!--     f_theta_i <- dlognorm(theta[i], mu, sqrt(V)) -->
+<!--     f_theta <- f_theta + f_theta_i -->
+<!--   } -->
+
+<!--   f_y <- 0 -->
+<!--   for(i in 1:length(theta)){ -->
+<!--     for(j in 1:length(Ydye[i,])){ -->
+<!--       f_y_i <- dlognorm(Ydye[i,j],theta[i],sqrt(W)) -->
+<!--       f_y <- f_y + f_y_i -->
+<!--     } -->
+<!--   } -->
+
+<!--   logf <- f_v+f_w+f_u+f_theta+f_y -->
+<!--   if (logf == -Inf){ -->
+<!--     return(0) -->
+<!--   } -->
+<!--   else{ -->
+<!--     return(logf)  -->
+<!--   } -->
+
+<!-- } -->
+
+<!-- f <- function(x, Y=Ydye, para=par){ -->
+<!--   logf_val <- logf(x, Y, para) -->
+<!-- if (logf_val == 0){ -->
+<!--     return(0) -->
+<!--   } -->
+<!--   else{ -->
+<!--     return(exp(logf(x, Y, para))) -->
+<!--   } -->
+<!-- } -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- x <- c(1.1,3000,1520,1520,1520,1520,1520,1520,1520) -->
+
+<!-- int1 <- adaptIntegrate(logf, lowerLimit = x-rep(0.5, length(x)), upperLimit = x-rep(0.0, length(x))) -->
+
+<!-- int1_val <- int1$integral-int1$error -->
+
+<!-- L=exp(int1_val) -->
+<!-- L -->
+<!-- ``` -->
+<!-- According to equation 15, an upper bound on K is as follows, -->
+<!-- ```{r} -->
+<!-- K <- log(sup_ratio)-int1_val -->
+<!-- K <- exp(K) -->
+<!-- K -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- diff9900 <- df_diff_all %>% -->
+<!--   group_by(iter) %>% -->
+<!--   summarise(mean_diff = mean(diff), min_diff =  min(diff), max_diff = max(diff)) %>%  -->
+<!--   filter(iter == 9900) -->
+
+<!-- diff9900 -->
+<!-- diff9900*K -->
+
+<!-- ``` -->
+
+<!-- ## Comparing this bound to Cowles and Rosenthal's -->
+
+<!-- Generate the initial value of $Y_0\sim \nu$ -->
+<!-- ```{r} -->
+<!-- par <- c(0.5,1.00001,0.00001,1.00001, 0, 10^(12))   # initial values from Cowles and Rosenthal. Note that b1 is not 1, but 1.0001. This is because our method requires b1>1. -->
+<!-- a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6]; -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- # Generate initial values that are aligned with Cowles and Rosenthal -->
+<!-- batch_m <- apply(Ydye,1,mean) -->
+<!-- bar_y <- mean(Ydye) -->
+<!-- v1 <- sum((Ydye-batch_m)^2)/(I*J) -->
+<!-- v2 <- sum((batch_m-bar_y)^2)/I -->
+
+<!-- theta <- (J*v1*batch_m +v2*bar_y)/(J*v1+v2) -->
+<!-- u <- bar_y -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- simVCM <- function(){ #same as previous simVCM function except that X_init is different and W is assigned 0 (since choice of priors would result in Inf) -->
+<!--   M <- 10000 -->
+<!--   M <- 500 -->
+<!--   a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6]; -->
+
+<!--   #initial value of mu and theta in Y coincides with V(X_0)=0 (eqn 9 from Cowles and Rosenthal paper). initial values of V and W are taken as conditional distributions given mu and theta. -->
+<!--   V <- rinvgamma(1, a1 + I/2, b1+sum((theta-u)^2)) -->
+<!--   W <- rinvgamma(1, a2+I*J/2, b2 + sum((Ydye-theta)^2)) -->
+<!--   Y <- c(V[1], W[1], u, theta) -->
+<!--   Y_init <- Y -->
+
+<!--   # initial value of X coincides with eqn 6 from paper -->
+<!--   V <- rinvgamma(1, a1, b1-1) -->
+<!--   W <- rinvgamma(1, a2, 0) -->
+<!--   u <- rnorm(1, a3, sqrt(b3)) -->
+<!--   theta <- rnorm(I, apply(Ydye,2,mean), W/J) -->
+<!--   X <- c(V[1], W[1], u[1], theta) -->
+<!--   X_init <- X -->
+
+<!--   df_X <- data.frame(t(c(X,0,0))) -->
+<!--   df_Y <- data.frame(t(c(Y,0,0))) -->
+<!--   colnames(df_X) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter") -->
+<!--   colnames(df_Y) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter") -->
+
+<!--  # a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6]; -->
+
+<!--   for (i in 1:M) { -->
+<!--       for (coord in 1:4){ -->
+<!--         if (coord == 3) { # Modify coordinate u -->
+<!--           z = rnorm(1,0,1) -->
+<!--           X <- gibbs_update_u(X, z) -->
+<!--           Y <- gibbs_update_u(Y, z) -->
+<!--         } -->
+<!--         else if (coord == 4) { # Modify all I thetas -->
+<!--           z = rnorm(I,0,1) -->
+<!--           X <- gibbs_update_theta(X, z) -->
+<!--           Y <- gibbs_update_theta(Y, z) -->
+<!--         } -->
+<!--         else if (coord == 1) { # Modify coordinate V -->
+<!--           g = rgamma(1, shape = a1+I/2, rate = 1) -->
+<!--           X <- gibbs_update_V(X, g) -->
+<!--           Y <- gibbs_update_V(Y, g) -->
+<!--         } -->
+<!--         else if (coord == 2) { # Modify coordinate W -->
+<!--           g = rgamma(1, shape = a2+I*J/2, rate = 1) -->
+<!--           X <- gibbs_update_W(X,g) -->
+<!--           Y <- gibbs_update_W(Y,g) -->
+<!--         } -->
+<!--         df_X <- rbind(df_X,c(X, coord, i)) -->
+<!--         df_Y <- rbind(df_Y,c(Y, coord, i)) -->
+<!--       } -->
+<!--   } -->
+
+<!--   df_X1 <- df_X %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "X") -->
+<!--   df_Y1 <- df_Y %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "Y") -->
+
+<!--   df <- left_join(df_X1, df_Y1, by=c('coord','iter','names')) -->
+<!--   df <- df %>% mutate(diff = X-Y) -->
+
+<!--   df_diff <- df %>% -->
+<!--     filter(coord ==1) %>% -->
+<!--     group_by(iter) %>% -->
+<!--     summarise(diff = sum(abs(diff))) -->
+<!--   return(df_diff) -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- df_diff1 <- simVCM() -->
+<!-- df_diff2 <- simVCM() -->
+<!-- df_diff3 <- simVCM() -->
+<!-- df_diff4 <- simVCM() -->
+<!-- df_diff5 <- simVCM() -->
+<!-- df_diff6 <- simVCM() -->
+<!-- df_diff7 <- simVCM() -->
+<!-- df_diff8 <- simVCM() -->
+<!-- df_diff9 <- simVCM() -->
+<!-- df_diff10 <- simVCM() -->
+<!-- df_diff11 <- simVCM() -->
+<!-- df_diff12 <- simVCM() -->
+<!-- df_diff13 <- simVCM() -->
+<!-- df_diff14 <- simVCM() -->
+<!-- df_diff15 <- simVCM() -->
+<!-- df_diff16 <- simVCM() -->
+<!-- df_diff17 <- simVCM() -->
+<!-- df_diff18 <- simVCM() -->
+<!-- df_diff19 <- simVCM() -->
+<!-- df_diff20 <- simVCM() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- df_diff1 <- df_diff1 %>% mutate(sim_no='1') -->
+<!-- df_diff2 <- df_diff2 %>% mutate(sim_no='2') -->
+<!-- df_diff3 <- df_diff3 %>% mutate(sim_no='3') -->
+<!-- df_diff4 <- df_diff4 %>% mutate(sim_no='4') -->
+<!-- df_diff5 <- df_diff5 %>% mutate(sim_no='5') -->
+<!-- df_diff6 <- df_diff6 %>% mutate(sim_no='6') -->
+<!-- df_diff7 <- df_diff7 %>% mutate(sim_no='7') -->
+<!-- df_diff8 <- df_diff8 %>% mutate(sim_no='8') -->
+<!-- df_diff9 <- df_diff9 %>% mutate(sim_no='9') -->
+<!-- df_diff10 <- df_diff10 %>% mutate(sim_no='10') -->
+
+<!-- df_diff11 <- df_diff11 %>% mutate(sim_no='11') -->
+<!-- df_diff12 <- df_diff12 %>% mutate(sim_no='12') -->
+<!-- df_diff13 <- df_diff13 %>% mutate(sim_no='13') -->
+<!-- df_diff14 <- df_diff14 %>% mutate(sim_no='14') -->
+<!-- df_diff15 <- df_diff15 %>% mutate(sim_no='15') -->
+<!-- df_diff16 <- df_diff16 %>% mutate(sim_no='16') -->
+<!-- df_diff17 <- df_diff17 %>% mutate(sim_no='17') -->
+<!-- df_diff18 <- df_diff18 %>% mutate(sim_no='18') -->
+<!-- df_diff19 <- df_diff19 %>% mutate(sim_no='19') -->
+<!-- df_diff20 <- df_diff20 %>% mutate(sim_no='20') -->
+
+<!-- df_diff_all <- rbind(df_diff1, df_diff2, df_diff3, df_diff4, df_diff5, df_diff6, df_diff7, df_diff8, df_diff9, df_diff10, df_diff11, df_diff12, df_diff13, df_diff14, df_diff15, df_diff16, df_diff17, df_diff1, df_diff19, df_diff20) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- df_diff_all %>% -->
+<!--   group_by(iter) %>% -->
+<!--   summarise(mean_diff = mean(diff), min_diff =  min(diff), max_diff = max(diff)) %>%  -->
+<!--   filter(iter>2) %>%   -->
+<!--   ggplot(aes(x = iter)) + -->
+<!--   geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "grey70") + -->
+<!--   geom_line(aes(y = mean_diff)) + scale_y_log10() + geom_hline(yintercept=0.01) + -->
+<!--   labs(title = TeX("Value of $||X_n-X'_n||_1$"), subtitle = "Using common random number technique") + -->
+<!--   xlab(TeX("n=iteration")) + ylab(TeX("$||X_n-X'_n||_1$")) -->
+<!-- ``` -->
+
+```{r}
+# df_diff_all %>%
+#   group_by(iter) %>%
+#   summarise(mean_diff = mean(diff), min_diff =  min(diff), max_diff = max(diff)) %>% 
+#   filter(iter==95)
+```
+
+
+```{r}
+# df_diff1 %>%
+#   filter(iter>1) %>%
+#   ggplot(aes(x = iter, y = diff)) + scale_y_log10() +
+#   geom_line() + labs(title = "Value of |X-Y|", subtitle = "Using common random number technique") +
+#   xlab("iteration") + ylab("value")
+```
+
+<!-- ## Find the constant $K$ from theorem 4.4 with priors specified by Cowles -->
+<!-- Generating bound between |X_n-Y_n| and |X_n-X_infty| -->
+
+<!-- ```{r} -->
+<!-- V_star <- 2/I -->
+<!-- W_star <- 2/(J*I-I) -->
+
+<!-- C <- (b1/(b1-1))^a1*(b2/(b2-1))^a2*1/((2*pi)^(I*J/2)*J^(1/2)) -->
+
+<!-- sup_ratio <- C*(exp(-1/V_star)/(V_star)^(I/2))*(exp(-1/W_star)/(W_star)^((J*I-I)/2)) -->
+<!-- sup_ratio -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- x <- c(1000,3000,1520,1520,1520,1520,1520,1520,1520) -->
+
+<!-- int1 <- adaptIntegrate(logf, lowerLimit = x-rep(0.5, length(x)), upperLimit = x+rep(0.10, length(x))) -->
+
+<!-- int1_val <- int1$integral-int1$error -->
+
+<!-- L=exp(int1_val) -->
+<!-- L -->
+<!-- ``` -->
+<!-- According to equation 15, an upper bound on K is as follows, -->
+<!-- ```{r} -->
+<!-- K <- log(sup_ratio)-int1_val -->
+<!-- K <- exp(K) -->
+<!-- K -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- diffK <- df_diff_all %>% -->
+<!--   group_by(iter) %>% -->
+<!--   summarise(mean_diff = mean(diff)*K, min_diff =  min(diff)*K, max_diff = max(diff)*K)  -->
+
+<!-- diffK %>%  -->
+<!--   filter(iter>2) %>%   -->
+<!--   ggplot(aes(x = iter)) + -->
+<!--   geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "grey70") + -->
+<!--   geom_line(aes(y = mean_diff)) + scale_y_log10() + -->
+<!--   labs(title = TeX("Value of $||X_n-X'_n||_1$"), subtitle = "Using common random number technique") + -->
+<!--   xlab(TeX("n=iteration")) + ylab(TeX("$||X_n-X'_n||_1$")) -->
+<!-- ``` -->
+<!-- ## Generate bound in TV from Wass distance.  -->
+
+<!-- ```{r} -->
+<!-- # I <- dim(Ydye)[2] -->
+<!-- # J <- dim(Ydye)[1] -->
+
+<!-- c1=(2/I)*(I/2+a1)*(1+sqrt(2/b1)*1/I+1/(2*b1*I^2))^(I/2+a1-1)*(sqrt(2/b1)+1/(b1*I)) -->
+
+<!-- c2=2/(I*J^(3/2))*((I*J)/2+a2)*(1+2/(sqrt(b2)*I*J)+1/(b2*I^2*J^2))^(I*J/2+a2-1)*(2*sqrt(J/b2)+2/(b2*sqrt(J)*I)) -->
+
+<!-- TV <- c1+c2 -->
+<!-- TV -->
+<!-- K*TV -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- diffTV <- df_diff_all %>% -->
+<!--   group_by(iter) %>% -->
+<!--   summarise(mean_diff = mean(diff)*K*TV, min_diff =  min(diff)*K*TV, max_diff = max(diff)*K*TV)  -->
+<!-- diffTV %>%  -->
+<!--   filter(iter>2) %>%   -->
+<!--   ggplot(aes(x = iter)) + -->
+<!--   geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "grey70") + -->
+<!--   geom_line(aes(y = mean_diff)) + scale_y_log10() + geom_hline(yintercept=0.01) + -->
+<!--   labs(title = TeX("Upper bound on $||X_n-X_{\\infty}||_{TV}$"), subtitle = "Using common random number technique") + -->
+<!--   xlab(TeX("n=iteration")) + ylab(TeX("Log scale of $||X_n-X_{\\infty}||_{TV}$")) -->
+<!-- ``` -->
+```{r}
+# diffTV %>% 
+#   filter(iter>450)
+```
+
+```{r}
+# diffTV %>% 
+#   filter(iter==205)
+```
+## Generating traceplots
+
+```{r}
+#   M <- 10000
+# M <- 500
+#   a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+# 
+#   V <- rinvgamma(1, a1, b1-1)
+#   W <- rinvgamma(1, a2, 0)
+#   u <- rnorm(1, a3, sqrt(b3))
+#   theta <- rnorm(I, apply(Ydye,2,mean), W/J)
+#   Y <- c(V[1], W[1], u[1], theta)
+#   Y_init <- Y
+# 
+#   V <- rinvgamma(1, a1, b1-1)
+#   W <- rinvgamma(1, a2, 0)
+#   u <- rnorm(1, a3, sqrt(b3))
+#   theta <- rnorm(I, apply(Ydye,2,mean), W/J)
+#   X <- c(V[1], W[1], u[1], theta)
+#   X_init <- X
+# 
+#   df_X <- data.frame(t(c(X,0,0)))
+#   df_Y <- data.frame(t(c(Y,0,0)))
+#   colnames(df_X) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+#   colnames(df_Y) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+# 
+#  # a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+# 
+#   for (i in 1:M) {
+#       for (coord in 1:4){
+#         if (coord == 3) { # Modify coordinate u
+#           z = rnorm(1,0,1)
+#           X <- gibbs_update_u(X, z)
+#           Y <- gibbs_update_u(Y, z)
+#         }
+#         else if (coord == 4) { # Modify all I thetas
+#           z = rnorm(I,0,1)
+#           X <- gibbs_update_theta(X, z)
+#           Y <- gibbs_update_theta(Y, z)
+#         }
+#         else if (coord == 1) { # Modify coordinate V
+#           g = rgamma(1, shape = a1+I/2, rate = 1)
+#           X <- gibbs_update_V(X, g)
+#           Y <- gibbs_update_V(Y, g)
+#         }
+#         else if (coord == 2) { # Modify coordinate W
+#           g = rgamma(1, shape = a2+I*J/2, rate = 1)
+#           X <- gibbs_update_W(X,g)
+#           Y <- gibbs_update_W(Y,g)
+#         }
+#         df_X <- rbind(df_X,c(X, coord, i))
+#         df_Y <- rbind(df_Y,c(Y, coord, i))
+#       }
+#   }
+```
+
+
+```{r}
+# df_X1 <- df_X %>% 
+#   filter(coord == 1) %>% 
+#   pivot_longer(V:theta6) %>% 
+#   mutate(val='X')
+# 
+# df_Y1 <- df_Y %>% 
+#   filter(coord == 1) %>% 
+#   pivot_longer(V:theta6) %>% 
+#   mutate(val='Y')
+# 
+# df <- rbind(df_X1,df_Y1)
+# ```
+# 
+# ```{r}
+# df %>%
+#   filter(name == 'V', iter>50, iter<i) %>% 
+#   ggplot(aes(x = iter, y = value)) + scale_y_log10() +
+#   geom_line(aes(col=val)) + labs(title="V")
+# 
+# df %>%
+#   filter(name == 'W', iter>50, iter<i) %>%
+#   ggplot(aes(x = iter, y = value)) + scale_y_log10() +
+#   geom_line(aes(col=val)) + labs(title="W")
+# 
+# df %>%
+#   filter(name == 'theta1', iter>50, iter<i) %>%
+#   ggplot(aes(x = iter, y = value)) + scale_y_log10() +
+#   geom_line(aes(col=val)) + labs(title="theta1")
+# 
+# df %>%
+#   filter(name == 'mu', iter>50, iter<i) %>% 
+#   ggplot(aes(x = iter, y = value)) + 
+#   geom_line(aes(col=val)) + labs(title="mu")
+```
+
+
+```{r}
+# df %>%
+#   filter(name == 'V', iter>50) %>% 
+#   ggplot(aes(x = iter, y = value)) + scale_y_log10() +
+#   geom_line(aes(col=val)) + labs(title="V")
+# 
+# df %>%
+#   filter(name == 'W', iter>50) %>%
+#   ggplot(aes(x = iter, y = value)) + scale_y_log10() +
+#   geom_line(aes(col=val)) + labs(title="W")
+# 
+# df %>%
+#   filter(name == 'theta1', iter>50) %>%
+#   ggplot(aes(x = iter, y = value)) + scale_y_log10() +
+#   geom_line(aes(col=val)) + labs(title="theta1")
+# 
+# df %>%
+#   filter(name == 'mu', iter>50) %>% 
+#   ggplot(aes(x = iter, y = value)) + 
+#   geom_line(aes(col=val)) + labs(title="mu")
+```
+
+```{r}
+# df_X %>%
+#   filter(iter>25, coord==1) %>% 
+#   ggplot(aes(x = iter, y = theta1)) +
+#   geom_line() + labs(title="theta1")
+# 
+# df_X %>%
+#   filter(iter>25, coord==1) %>% 
+#   ggplot(aes(x = iter, y = mu)) +
+#   geom_line() + labs(title="mu")
+# 
+# df_X %>%
+#   filter(iter>25, coord==1) %>% 
+#   ggplot(aes(x = iter, y = V)) +
+#   geom_line() + labs(title="V")
+# 
+# df_X %>%
+#   filter(iter>25, coord==1) %>% 
+#   ggplot(aes(x = iter, y = W)) +
+#   geom_line() + labs(title="W")
+```
