@@ -1,3 +1,3 @@
-The documents entitled "CommonRandomNumber" provide the code and output for graphs and calculations in 
-"Applying the common random number technique as a Markov chain convergence diagnostic." 
+The documents entitled "VarComp.html", "JameStein.html", "BayesReg.html"  provide the code and output for graphs and calculations in 
+"Estimating MCMC convergence rates using common random number." 
 This paper can be found in ______.
