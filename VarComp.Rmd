@@ -139,44 +139,44 @@ load('df_Y_VarComp.RData')
 df_X %>%
   filter(iter>9000, coord==1) %>% 
   ggplot(aes(x = iter, y = theta1)) +
-  geom_line() + labs(title="theta1")
+  geom_line() + labs(title="theta1") + theme_bw()
 
 df_X %>%
   filter(iter>9000, coord==1) %>% 
   ggplot(aes(x = iter, y = mu)) +
-  geom_line() + labs(title="mu")
+  geom_line() + labs(title="mu") + theme_bw()
 
 df_X %>%
   filter(iter>9000, coord==1) %>% 
   ggplot(aes(x = iter, y = V)) +
-  geom_line() + labs(title="V")
+  geom_line() + labs(title="V") + theme_bw()
 
 df_X %>%
   filter(iter>9000, coord==1) %>% 
   ggplot(aes(x = iter, y = W)) +
-  geom_line() + labs(title="W")
+  geom_line() + labs(title="W") + theme_bw()
 ```
 
 ```{r}
 df_X %>%
   filter(iter>25, coord==1) %>% 
   ggplot(aes(x = iter, y = theta1)) +
-  geom_line() + labs(title="theta1")
+  geom_line() + labs(title="theta1") + theme_bw()
 
 df_X %>%
   filter(iter>25, coord==1) %>% 
   ggplot(aes(x = iter, y = mu)) +
-  geom_line() + labs(title="mu")
+  geom_line() + labs(title="mu") + theme_bw()
 
 df_X %>%
   filter(iter>25, coord==1) %>% 
   ggplot(aes(x = iter, y = V)) +
-  geom_line() + labs(title="V")
+  geom_line() + labs(title="V")+ theme_bw()
 
 df_X %>%
   filter(iter>25, coord==1) %>% 
-  ggplot(aes(x = iter, y = W)) +
-  geom_line() + labs(title="W")
+  ggplot(aes(x = iter, y = W)) + 
+  geom_line() + labs(title="W") + theme_bw()
 ```
 
 ```{r}
@@ -197,14 +197,14 @@ df_diff <- df %>%
 df_diff %>%
   filter(iter>2) %>%
   ggplot(aes(x = iter, y = diff)) +
-  geom_line() + labs(title = "Value of |X-Y|", subtitle = "Using common random number technique") +
+  geom_line() + labs(title = "Value of |X-Y|", subtitle = "Using common random number technique") + theme_bw() +
   xlab("iteration") + ylab("value")
 ```
 
 ```{r}
 #par <- c(6, 6, 6, 6, 1600, 1600)
 
-simVCM <- function(){
+simVCM <- function(sim_no){
   a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
   
   V <- rinvgamma(1, a1, b1-1)
@@ -261,65 +261,25 @@ simVCM <- function(){
   df_diff <- df %>%
     filter(coord ==1) %>%
     group_by(iter) %>%
-    summarise(diff = sum(abs(diff)))
+    summarise(diff = sum(abs(diff))) %>% 
+    mutate(sim_no=as.character(sim_no))
   return(df_diff)
 }
 ```
 
 ```{r}
-# df_diff1 <- simVCM()
-# df_diff2 <- simVCM()
-# df_diff3 <- simVCM()
-# df_diff4 <- simVCM()
-# df_diff5 <- simVCM()
-# df_diff6 <- simVCM()
-# df_diff7 <- simVCM()
-# df_diff8 <- simVCM()
-# df_diff9 <- simVCM()
-# df_diff10 <- simVCM()
-# 
-# df_diff11 <- simVCM()
-# df_diff12 <- simVCM()
-# df_diff13 <- simVCM()
-# df_diff14 <- simVCM()
-# df_diff15 <- simVCM()
-# df_diff16 <- simVCM()
-# df_diff17 <- simVCM()
-# df_diff18 <- simVCM()
-# df_diff19 <- simVCM()
-# df_diff20 <- simVCM()
-# 
-# df_diff1 <- df_diff1 %>% mutate(sim_no='1')
-# df_diff2 <- df_diff2 %>% mutate(sim_no='2')
-# df_diff3 <- df_diff3 %>% mutate(sim_no='3')
-# df_diff4 <- df_diff4 %>% mutate(sim_no='4')
-# df_diff5 <- df_diff5 %>% mutate(sim_no='5')
-# df_diff6 <- df_diff6 %>% mutate(sim_no='6')
-# df_diff7 <- df_diff7 %>% mutate(sim_no='7')
-# df_diff8 <- df_diff8 %>% mutate(sim_no='8')
-# df_diff9 <- df_diff9 %>% mutate(sim_no='9')
-# df_diff10 <- df_diff10 %>% mutate(sim_no='10')
-# 
-# df_diff11 <- df_diff11 %>% mutate(sim_no='11')
-# df_diff12 <- df_diff12 %>% mutate(sim_no='12')
-# df_diff13 <- df_diff13 %>% mutate(sim_no='13')
-# df_diff14 <- df_diff14 %>% mutate(sim_no='14')
-# df_diff15 <- df_diff15 %>% mutate(sim_no='15')
-# df_diff16 <- df_diff16 %>% mutate(sim_no='16')
-# df_diff17 <- df_diff17 %>% mutate(sim_no='17')
-# df_diff18 <- df_diff18 %>% mutate(sim_no='18')
-# df_diff19 <- df_diff19 %>% mutate(sim_no='19')
-# df_diff20 <- df_diff20 %>% mutate(sim_no='20')
-```
-
-
-```{r}
-# df_diff_all <- rbind(df_diff1, df_diff2, df_diff3, df_diff4, df_diff5, df_diff6, df_diff7, df_diff8, df_diff9, df_diff10, df_diff11, df_diff12, df_diff13, df_diff14, df_diff15, df_diff16, df_diff17, df_diff1, df_diff19, df_diff20)
+# df_diff_all <- simVCM(1)
+# for(i in 2:300){
+#   df <- simVCM(i)
+#   df_diff_all <- rbind(df_diff_all, df)
+#   print(i)
+# }
 ```
 
 ```{r}
 # save(df_diff_all, file = "df_diff_all_VarComp.RData")
 ```
+
 
 ```{r}
 load('df_diff_all_VarComp.RData')
@@ -344,29 +304,9 @@ Calculate $K$ for the variance component model.
 
 ## Find the constant $K$ from theorem 4.4
 
-We want to find the constant $K$ that will bound the distance between $X_n$ and the corresponding stationary distribution. We will do so, by making use of equation 15, which writes that for an $L\leq \int_{\mathcal{X}} f(\vec{\theta}, v, w, \mu) dx$,
-
-$$K\leq \frac{1}{L}\sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)}$$
 
 Step 1: Find an upper bound on $f/\nu$
 
-Based on our calculations, the supremum of $\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)}$ is bounded as follows for $$C=\frac{1}{(2\pi)^{\sum_{i=1}^K J_i/2}} \frac{1}{(\prod_{i=1}^{K} J_i)^{1/2}}$$,
-
-\begin{align*}
-	\sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)} &\leq C \left(\frac{1}{V^{K/2}}e^{-\frac{1}{2V}}\right)
-	\left( \frac{1}{W^{(\sum_{i=1}^K J_i-K)/2}}e^{-\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{2W}} \right) \\
-	&= C \frac{\Gamma(K/2-1)}{0.5^{K/2+1}}\left(\frac{0.5^{K/2+1}}{\Gamma(K/2-1)}\frac{1}{V^{K/2}}e^{-\frac{1}{2V}}\right)
-	\frac{\Gamma(a_W)}{b_W^{a_w}}\left( \frac{b_W^{a_w}}{\Gamma(a_W)} \frac{1}{W^{a_w+1}}e^{-\frac{b_W}{W}} \right) \\
-\end{align*}
-
-Where $$a_W = (\sum_{i=1}^K J_i-K)/2 -1$$ and $$b_W=\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{2}$$
-
-Since both of the functions for $V$ and $W$ are inverse gamma, the supremum occurs when $V^*=\frac{1}{2}\frac{1}{K/2-1}=\frac{1}{K-2}$ and $W^* = \frac{b_W}{a_W+1}=\frac{\sum_{i=1}^K(\sum_{j=1}^{J_i} Y_{ij}^2 -J_i \bar{Y}_i^2)}{\sum_{i=1}^K J_i-K}$. So that,
-
-\begin{align*}
-	\sup_{(\vec{\theta}, v, w, \mu)}\frac{f(\vec{\theta}, v, w, \mu)}{\nu(\vec{\theta}, v, w, \mu)} &\leq C \frac{\Gamma(K/2-1)}{0.5^{K/2+1}}\left(\frac{0.5^{K/2+1}}{\Gamma(K/2-1)}\frac{1}{(V^*)^{K/2}}e^{-\frac{1}{2V^*}}\right)
-	\frac{\Gamma(a_W)}{b_W^{a_w}}\left( \frac{b_W^{a_w}}{\Gamma(a_W)} \frac{1}{(W^*)^{a_w+1}}e^{-\frac{b_W}{W^*}} \right) \\
-\end{align*}
 
 ```{r}
 a_w <- I*(J-1)/2-1
@@ -477,6 +417,40 @@ df_diff_all %>%
   #labs(title = TeX("Value of $||X_n-X'_n||_1$"), subtitle = "Using common random number technique") +
   xlab(TeX("n=iteration")) + ylab(TeX("Logscale of $K||X_n-X'_n||_1$"))
 ```
+```{r}
+df_diff_all %>%
+  mutate(diff=diff*K) %>% 
+  group_by(iter) %>%
+  summarise(mean_diff = mean(diff), 
+            min_diff =  min(diff), 
+            max_diff = max(diff),
+            lq0_diff =  quantile(diff, probs = c(0.05)), 
+            uq0_diff = quantile(diff, probs = c(0.95)), 
+            lq1_diff =  quantile(diff, probs = c(0.1)), 
+            uq1_diff = quantile(diff, probs = c(0.9)), 
+            lq2_diff =  quantile(diff, probs = c(0.2)), 
+            uq2_diff = quantile(diff, probs = c(0.8)), 
+            lq3_diff =  quantile(diff, probs = c(0.3)), 
+            uq3_diff = quantile(diff, probs = c(0.7)), 
+            lq4_diff =  quantile(diff, probs = c(0.4)), 
+            uq4_diff = quantile(diff, probs = c(0.6))) %>% 
+  filter(iter>2) %>%
+  ggplot(aes(x = iter)) +
+  geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "skyblue", alpha=0.15) +
+  geom_ribbon(aes(ymin = lq0_diff, ymax = uq0_diff), fill = "skyblue", alpha=0.20) +
+  geom_ribbon(aes(ymin = lq1_diff, ymax = uq1_diff), fill = "skyblue", alpha=0.40) +
+  geom_ribbon(aes(ymin = lq2_diff, ymax = uq2_diff), fill = "skyblue", alpha=0.60) +
+  geom_ribbon(aes(ymin = lq3_diff, ymax = uq3_diff), fill = "skyblue", alpha=0.80) +
+  geom_ribbon(aes(ymin = lq4_diff, ymax = uq4_diff), fill = "skyblue", alpha=0.90) +
+  geom_line(aes(y = mean_diff),size=1) + scale_y_log10() + geom_hline(yintercept=0.01, linetype=2) +
+  #labs(title = TeX("Value of $K||X_n-X'_n||_1$"), subtitle = "Using common random number technique") +
+  theme_bw(base_size = 13) + scale_y_log10() +
+  xlab(TeX("n=iteration")) + ylab(TeX("Logscale of $W(L(X_n),\\pi)$")) +
+  geom_text(aes(200,0.003,label = 'y=0.01', vjust = -1)) 
+  #scale_alpha_manual(values=c(seq(0.05,0.9,length.out=floor(0.5*length(qq))),
+                              #seq(0.9,0.05,length.out=floor(0.5*length(qq)))))
+```
+
 ```{r}
 first_hit_wass <-
   df_diff_all %>%
@@ -602,7 +576,6 @@ load('df_diff_all_Cowles_VarComp.RData')
 ```
 
 
-
 ```{r}
 df_diff_all %>%
   group_by(iter) %>%
@@ -640,23 +613,158 @@ K <- log(sup_ratio)-int1_val
 K <- exp(K)
 K
 ```
+```{r}
+# first time wasserstein distance below 0.01
+df_diff_all %>%
+  mutate(diff=diff*K) %>% 
+  group_by(iter) %>%
+  summarise(mean_diff = mean(diff)) %>% 
+  filter(mean_diff<0.01) %>% 
+  summarise(min(iter))
+```
+
 
 ```{r}
 df_diff_all %>%
   mutate(diff=diff*K) %>% 
   group_by(iter) %>%
-  summarise(mean_diff = mean(diff), min_diff =  min(diff), max_diff = max(diff),lq_diff =  quantile(diff, probs = c(0.25)), uq_diff = quantile(diff, probs = c(0.75))) %>% 
-  filter(iter>2) %>%  
+  summarise(mean_diff = mean(diff), 
+            min_diff =  min(diff), 
+            max_diff = max(diff),
+            lq0_diff =  quantile(diff, probs = c(0.05)), 
+            uq0_diff = quantile(diff, probs = c(0.95)), 
+            lq1_diff =  quantile(diff, probs = c(0.1)), 
+            uq1_diff = quantile(diff, probs = c(0.9)), 
+            lq2_diff =  quantile(diff, probs = c(0.2)), 
+            uq2_diff = quantile(diff, probs = c(0.8)), 
+            lq3_diff =  quantile(diff, probs = c(0.3)), 
+            uq3_diff = quantile(diff, probs = c(0.7)), 
+            lq4_diff =  quantile(diff, probs = c(0.4)), 
+            uq4_diff = quantile(diff, probs = c(0.6))) %>% 
+  filter(iter>20, iter<550) %>%  
   ggplot(aes(x = iter)) +
-  geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "grey70", alpha=0.50) +
-  geom_ribbon(aes(ymin = lq_diff, ymax = uq_diff), fill = "grey70", alpha=0.750) +
-  geom_line(aes(y = mean_diff),size=1) + scale_y_log10() + geom_hline(yintercept=0.01) +
+  geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "skyblue", alpha=0.15) +
+  geom_ribbon(aes(ymin = lq0_diff, ymax = uq0_diff), fill = "skyblue", alpha=0.20) +
+  geom_ribbon(aes(ymin = lq1_diff, ymax = uq1_diff), fill = "skyblue", alpha=0.40) +
+  geom_ribbon(aes(ymin = lq2_diff, ymax = uq2_diff), fill = "skyblue", alpha=0.60) +
+  geom_ribbon(aes(ymin = lq3_diff, ymax = uq3_diff), fill = "skyblue", alpha=0.80) +
+  geom_ribbon(aes(ymin = lq4_diff, ymax = uq4_diff), fill = "skyblue", alpha=0.90) +
+  geom_line(aes(y = mean_diff),size=1) + scale_y_log10() + geom_hline(yintercept=0.01, linetype=2) +
   #labs(title = TeX("Value of $K||X_n-X'_n||_1$"), subtitle = "Using common random number technique") +
-  theme_bw() +
-  xlab(TeX("n=iteration")) + ylab(TeX("Logscale of $K||X_n-X'_n||_1$"))
+  theme_bw(base_size = 13) +
+  xlab(TeX("n=iteration")) + ylab(TeX("Logscale of $W(L(X_n),\\pi)$")) + 
+  geom_text(aes(540,0.004,label = 'y=0.01', vjust = -1)) 
+  #scale_alpha_manual(values=c(seq(0.05,0.9,length.out=floor(0.5*length(qq))),
+                              #seq(0.9,0.05,length.out=floor(0.5*length(qq)))))
 ```
 
+```{r}
+df_diff_all %>%
+  mutate(diff=diff*K) %>% 
+  group_by(iter) %>%
+  summarise(mean_diff = mean(diff), min_diff =  min(diff), max_diff = max(diff),lq_diff =  quantile(diff, probs = c(0.05)), uq_diff = quantile(diff, probs = c(0.95))) %>% 
+  filter(iter>50, iter <560) %>%  
+  ggplot(aes(x = iter)) +
+  #geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "grey70", alpha=0.50) +
+  geom_ribbon(aes(ymin = lq_diff, ymax = uq_diff), fill = "grey70", alpha=0.750) +
+  geom_line(aes(y = mean_diff),size=1) + geom_hline(yintercept=0.01) +
+  #labs(title = TeX("Value of $K||X_n-X'_n||_1$"), subtitle = "Using common random number technique") +
+  theme_bw() + scale_fill_viridis_d() +
+  xlab(TeX("n=iteration")) + ylab(TeX("$||L(X_n)-\\pi||_1$"))
+```
+
+
 ## Generate bound in TV from Wass distance. 
+
+Must get squared distance 
+```{r}
+simVCM <- function(){ #same as previous simVCM function except that X_init is different and W is assigned 0 (since choice of priors would result in Inf)
+  M <- 700
+  a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+  
+  #initial value of mu and theta in Y coincides with V(X_0)=0 (eqn 9 from Cowles and Rosenthal paper). initial values of V and W are taken as conditional distributions given mu and theta.
+  V <- rinvgamma(1, a1 + I/2, b1+sum((theta-u)^2))
+  W <- rinvgamma(1, a2+I*J/2, b2 + sum((Ydye-theta)^2))
+  Y <- c(V[1], W[1], u, theta)
+  Y_init <- Y
+  
+  # initial value of X coincides with eqn 6 from paper
+  V <- rinvgamma(1, a1, b1-1)
+  W <- rinvgamma(1, a2, 0)
+  u <- rnorm(1, a3, sqrt(b3))
+  theta <- rnorm(I, apply(Ydye,2,mean), W/J)
+  X <- c(V[1], W[1], u[1], theta)
+  X_init <- X
+
+  df_X <- data.frame(t(c(X,0,0)))
+  df_Y <- data.frame(t(c(Y,0,0)))
+  colnames(df_X) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+  colnames(df_Y) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+
+ # a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+
+  for (i in 1:M) {
+      for (coord in 1:4){
+        if (coord == 3) { # Modify coordinate u
+          z = rnorm(1,0,1)
+          X <- gibbs_update_u(X, z)
+          Y <- gibbs_update_u(Y, z)
+        }
+        else if (coord == 4) { # Modify all I thetas
+          z = rnorm(I,0,1)
+          X <- gibbs_update_theta(X, z)
+          Y <- gibbs_update_theta(Y, z)
+        }
+        else if (coord == 1) { # Modify coordinate V
+          g = rgamma(1, shape = a1+I/2, rate = 1)
+          X <- gibbs_update_V(X, g)
+          Y <- gibbs_update_V(Y, g)
+        }
+        else if (coord == 2) { # Modify coordinate W
+          g = rgamma(1, shape = a2+I*J/2, rate = 1)
+          X <- gibbs_update_W(X,g)
+          Y <- gibbs_update_W(Y,g)
+        }
+        df_X <- rbind(df_X,c(X, coord, i))
+        df_Y <- rbind(df_Y,c(Y, coord, i))
+      }
+  }
+
+  df_X1 <- df_X %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "X")
+  df_Y1 <- df_Y %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "Y")
+
+  df <- left_join(df_X1, df_Y1, by=c('coord','iter','names'))
+  df <- df %>% mutate(diff = X-Y)
+
+  df_diff <- df %>%
+    filter(coord ==1) %>%
+    group_by(iter) %>%
+    summarise(diff = sum((diff)^2))
+  return(df_diff)
+}
+```
+
+```{r}
+# df_diff_all2 <- simVCM()
+# df_diff_all2 <- df_diff_all2 %>% mutate(sim_no=1)
+# for (i in 2:2000){
+#   df_diff <- simVCM()
+#   df_diff <- df_diff %>% mutate(sim_no=i)
+#   df_diff_all2 <- rbind(df_diff_all2,df_diff)
+# }
+# 
+# save(df_diff_all2, file = "df_diff_all2_Cowles_VarComp.RData")
+```
+
+```{r}
+load('df_diff_all2_Cowles_VarComp.RData')
+```
+
+```{r}
+df_diff_all2 <- df_diff_all2 %>% 
+  mutate(diff = sqrt(diff))
+```
+
 
 ```{r}
 # I <- dim(Ydye)[2]
@@ -670,23 +778,47 @@ TV <- (c1+c2)*J^(1.5)*I
 TV
 K*TV
 ```
+Add Cowles and Rosenthal's bound
+```{r}
+x <- 1:10000
+DnMBound <- 0.72^(as.integer(0.000152*x))+0.7905*(0.99985)^x
+# for(i in 1:700){
+#   DnMBound[i] <- 0.072^(as.integer(0.000152*i))+0.7905*(0.99985)^i
+# }
+tail(DnMBound)
+```
 
 ```{r}
 diffTV <- df_diff_all %>%
   group_by(iter) %>%
-  summarise(mean_diff = mean(diff)*K*TV, min_diff =  min(diff)*K*TV, max_diff = max(diff)*K*TV) 
-diffTV %>% 
-  filter(iter>2) %>%  
-  ggplot(aes(x = iter)) +
-  geom_ribbon(aes(ymin = min_diff, ymax = max_diff), fill = "grey70", alpha=0.75) +
-  geom_line(aes(y = mean_diff)) + scale_y_log10() + geom_hline(yintercept=0.01) +
-  labs(title = TeX("Upper bound on $||X_n-X_{\\infty}||_{TV}$"), subtitle = "Using common random number technique") +
-  xlab(TeX("n=iteration")) + ylab(TeX("Log scale of $K*TV*||X_n-X_{\\infty}||_{TV}$"))
+  summarise(CRN = mean(diff)*K*TV)
+```
+```{r}
+diffTV_all <- rbind(diffTV, data.frame(iter=701:10000, CRN=rep(0,10000-700))) %>% 
+  left_join(data.frame(iter = 1:10000, DnM = DnMBound), by='iter') %>% 
+  pivot_longer(cols = c('CRN', 'DnM'), names_to='bound', values_to='val_type') 
+# %>% 
+#   group_by(iter, bound_type) %>% 
+#   mutate(val_type=min(1,val_type))
+```
+```{r}
+diffTV_all 
+```
+
+
+```{r}
+diffTV_all %>% 
+  filter(iter>470, iter<1000) %>%  
+  ggplot(aes(x = iter, y = val_type, colour=bound)) +
+  geom_line(aes(lty=bound), size=1) +
+  xlab(TeX("n=iteration")) + ylab(TeX("$||L(X_n)-\\pi||_{TV}$")) +
+  theme_bw(base_size=13) + theme(legend.position="bottom") + 
+  scale_color_manual(values = c('black','skyblue'))
 ```
 
 ```{r}
 first_hit_wass <- diffTV %>% 
-  filter(mean_diff <= 0.01) %>% 
+  filter(CRN <= 0.01) %>% 
   summarise(first_hit_wass=min(iter))
 
 first_hit_wass <- first_hit_wass$first_hit_wass

@@ -111,7 +111,7 @@ L
 ```{r}
 alpha <- (n+v_0)/2
 beta <- v_0*c_0/2
-K <- 1/L*gamma(alpha)/beta^alpha #*(2*pi)^(p/2)
+K <- 1/L*gamma(alpha)/beta^alpha*(2*pi)^(p/2)
 K
 tvbound <- (n+v_0)^2/(2*v_0*c_0)
 tvbound
@@ -154,7 +154,7 @@ Now we apply the common random number technique to generate an estimate of $E[|X
 ```{r}
 # I = 1000
 # #I = 100
-# J = 100
+# J = 200
 # # I=10
 # # J=10
 # diff <- matrix(0, I, J)
@@ -166,40 +166,37 @@ Now we apply the common random number technique to generate an estimate of $E[|X
 # 
 #   # it[1,] <- 1/rgamma(2, shape = alpha, rate = beta)
 #   it[1,] <- c(1/rgamma(1, shape = alpha, rate = beta), 100)
-#   
-#   Z <- rnorm(p, 0, 1)
-#   beta1 <- BetaIt(it[1,1], Z)
-#   beta2 <- BetaIt(it[1,2], Z)
+# 
+#   beta1 <- rnorm(p, 0, 1)
+#   beta2 <- rnorm(p, 0, 1)
 #   diffB[i,1] <- sum(abs(beta1-beta2))
 #   for(j in 2:J){
 #     Z <- rnorm(p, 0, 1)
 #     G <- rgamma(1, shape = alpha, rate =1)
 #     it[j,1] <- nextIt(it[j-1,1], Z, G)
 #     it[j,2] <- nextIt(it[j-1,2], Z, G)
-#     
+# 
 #     #Calculate beta
 #     #Z <- rnorm(p, 0, 1)
 #     beta1 <- BetaIt(it[j,1], Z)
 #     beta2 <- BetaIt(it[j,2], Z)
 #     diffB[i,j] <- sum(abs(beta1-beta2))
 #   }
-#   
+# 
 #   diff[i,] <- abs(it[,1]-it[,2])
 #   #it1[i,] <- it[,1]
 #   #it2[i,] <- it[,2]
 # }
 ```
 
-
-
 ```{r}
 # diff_df <- data.frame(t(diff), iter_no = 1:J)
-# diff_df <- diff_df %>% 
-#   pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val") 
+# diff_df <- diff_df %>%
+#   pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val")
 # 
 # diffB_df <- data.frame(t(diffB), iter_no = 1:J)
-# diffB_df <- diffB_df %>% 
-#   pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val") 
+# diffB_df <- diffB_df %>%
+#   pivot_longer(cols = starts_with("X"), names_to = "sim_no", values_to = "val")
 # 
 # diff_df <- diff_df %>% left_join(diffB_df, by=c("iter_no","sim_no"))
 # names(diff_df) <- c("iter_no", "sim_no", "o", "b")
@@ -207,7 +204,7 @@ Now we apply the common random number technique to generate an estimate of $E[|X
 ```
 
 ```{r}
-#save(diff_df, file = "diff_df_BayesReg.RData")
+# save(diff_df, file = "diff_df_BayesReg.RData")
 ```
 
 ```{r}
@@ -232,14 +229,30 @@ diff_df %>%
 diff_df %>% 
   mutate(val=val*K) %>% 
   group_by(iter_no) %>% 
-  summarise(mean_val = mean(val), max_val = max(val), min_val = max(min(val),10^(-6)),lq_val =  quantile(val, probs = c(0.25)), uq_val = quantile(val, probs = c(0.75))) %>% 
+  summarise(mean_val = mean(val), max_val = max(val), min_val = max(min(val),10^(-6)),
+            lq1_val =  quantile(val, probs = c(0.05)), 
+            uq1_val = quantile(val, probs = c(0.95)),
+            lq2_val =  quantile(val, probs = c(0.1)), 
+            uq2_val = quantile(val, probs = c(0.9)),
+            lq3_val =  quantile(val, probs = c(0.2)), 
+            uq3_val = quantile(val, probs = c(0.8)),
+            lq4_val =  quantile(val, probs = c(0.3)), 
+            uq4_val = quantile(val, probs = c(0.7)),
+            lq5_val =  quantile(val, probs = c(0.4)), 
+            uq5_val = quantile(val, probs = c(0.6))) %>% 
   ggplot(aes(x = iter_no)) + 
-  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "grey70", alpha=0.50) +
-  geom_ribbon(aes(ymin = lq_val, ymax = uq_val), fill = "grey70", alpha=0.750) +
+  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "skyblue", alpha=0.15) +
+  geom_ribbon(aes(ymin = lq1_val, ymax = uq1_val), fill = "skyblue", alpha=0.2) +
+  geom_ribbon(aes(ymin = lq2_val, ymax = uq2_val), fill = "skyblue", alpha=0.4) +
+  geom_ribbon(aes(ymin = lq3_val, ymax = uq3_val), fill = "skyblue", alpha=0.6) +
+  geom_ribbon(aes(ymin = lq4_val, ymax = uq4_val), fill = "skyblue", alpha=0.8) +
+  geom_ribbon(aes(ymin = lq5_val, ymax = uq5_val), fill = "skyblue", alpha=0.9) +
   geom_line(aes(y = mean_val), size=1) + scale_y_log10()+ 
-  theme(legend.position = "none") + geom_hline(yintercept=0.01) +
+  theme(legend.position = "none") + geom_hline(yintercept=0.01, linetype=2) +
   #labs(title = TeX("Value of $||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"), subtitle = "Based on 1000 simulations") +
-  xlab("n=iteration") + ylab(TeX("Logscale of $K||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$")) 
+  theme_bw(base_size = 13) + xlim(0,100) +
+  xlab("n=iteration") + ylab(TeX("Logscale of $W(L(\\sigma^2_n,\\beta_n),\\pi)$")) +
+  geom_text(aes(100,0.01,label = 'y=0.01', vjust = -1)) 
 ```
 ```{r}
 first_hit <- diff_df %>% 
@@ -263,22 +276,23 @@ expdiff
 ```{r}
 K*tvbound
 ```
+
 ```{r}
-first_hit <- diff_df %>% 
-  mutate(val=val*K*tvbound) %>% 
-  group_by(iter_no) %>% 
-  summarise(diff=mean(val)) %>% 
-  filter(diff<=0.01) %>% 
-  summarise(first_hit=min(iter_no))
-
-first_hit <- first_hit$first_hit
-first_hit
-
-expdiff <- diff_df %>%
-  mutate(val=val*K*tvbound) %>% 
-  filter(iter_no==first_hit) %>%
-  summarise(expdiff = mean(val))
-expdiff
+# first_hit <- diff_df %>% 
+#   mutate(val=o*K*tvbound) %>% 
+#   group_by(iter_no) %>% 
+#   summarise(diff=mean(val)) %>% 
+#   filter(diff<=0.01) %>% 
+#   summarise(first_hit=min(iter_no))
+# 
+# first_hit <- first_hit$first_hit
+# first_hit
+# 
+# expdiff <- diff_df %>%
+#   mutate(val=val*K*tvbound) %>% 
+#   filter(iter_no==first_hit) %>%
+#   summarise(expdiff = mean(val))
+# expdiff
 
 ```
 
@@ -290,7 +304,7 @@ expdiff
 it_init <- seq(5,1000, by =50)
 I = length(it_init)
 
-J = 10
+J = 9
 
 diff <- matrix(0, I, J)
 diffB <- matrix(0, I, J)
@@ -335,45 +349,45 @@ traceplot(it_list)
 
 ## Calculating the autocorrelation function
 ```{r}
-I =1000
-#I = 100
-J = 10
-# I=10
-# J=10
-diff <- matrix(0, I, J)
-diffB <- matrix(0, I, J)
-it1 <- matrix(0, I, J)
-it2 <- matrix(0, I, J)
-for(i in 1:I){
-  it <- matrix(0, ncol=2, nrow=J)
-
-  it[1,] <- 1/rgamma(2, shape = alpha, rate = beta)
-
-  Z <- rnorm(p, 0, 1)
-  beta1 <- BetaIt(it[1,1], Z)
-  beta2 <- BetaIt(it[1,2], Z)
-  diffB[i,1] <- sum(abs(beta1-beta2))
-  for(j in 2:J){
-    Z <- rnorm(p, 0, 1)
-    G <- rgamma(1, shape = alpha, rate =1)
-    it[j,1] <- nextIt(it[j-1,1], Z, G)
-    it[j,2] <- nextIt(it[j-1,2], Z, G)
-
-    #Calculate beta
-    #Z <- rnorm(p, 0, 1)
-    beta1 <- BetaIt(it[j,1], Z)
-    beta2 <- BetaIt(it[j,2], Z)
-    diffB[i,j] <- sum(abs(beta1-beta2))
-  }
-
-
-  it1[i,] <- it[,1]
-  #it2[i,] <- it[,2]
-}
+# I =1000
+# #I = 100
+# J = 9
+# # I=10
+# # J=10
+# diff <- matrix(0, I, J)
+# diffB <- matrix(0, I, J)
+# it1 <- matrix(0, I, J)
+# it2 <- matrix(0, I, J)
+# for(i in 1:I){
+#   it <- matrix(0, ncol=2, nrow=J)
+# 
+#   it[1,] <- 1/rgamma(2, shape = alpha, rate = beta)
+# 
+#   #Z <- rnorm(p, 0, 1)
+#   beta1 <- rnorm(p, 0, 1)
+#   beta2 <- rnorm(p, 0, 1)
+#   diffB[i,1] <- sum(abs(beta1-beta2))
+#   for(j in 2:J){
+#     Z <- rnorm(p, 0, 1)
+#     G <- rgamma(1, shape = alpha, rate =1)
+#     it[j,1] <- nextIt(it[j-1,1], Z, G)
+#     it[j,2] <- nextIt(it[j-1,2], Z, G)
+# 
+#     #Calculate beta
+#     #Z <- rnorm(p, 0, 1)
+#     beta1 <- BetaIt(it[j,1], Z)
+#     beta2 <- BetaIt(it[j,2], Z)
+#     diffB[i,j] <- sum(abs(beta1-beta2))
+#   }
+# 
+# 
+#   it1[i,] <- it[,1]
+#   #it2[i,] <- it[,2]
+# }
 ```
 
 ```{r}
-save(it1, file = "it1_BayesReg.RData")
+#save(it1, file = "it1_BayesReg.RData")
 ```
 
 ```{r}
@@ -395,10 +409,10 @@ data.frame(lagmax) %>%
   ggplot(aes(x=lagmax)) + geom_histogram(binwidth = 1)
 ```
 ```{r}
-length(lagmax[lagmax<=10])
+length(lagmax[lagmax<=9])
 ```
 ```{r}
-lagmax[lagmax>10]
+lagmax[lagmax>9]
 ```
 
 

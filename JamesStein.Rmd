@@ -26,7 +26,7 @@ You can also embed plots, for example:
 ```{r}
 Y <- EfronMorris$y
 V <- var(Y)
-
+V
 # priors
 a = 0.01
 b <- 2
@@ -60,14 +60,15 @@ nextIt <- function(x, Z, Z_mu, G){
 # colnames(it2) <- cnames
 # 
 # for(i in 1:I){
-#   
+# 
 # #initializing the chains. it1~nu and it2
-#   it1[it1$it==1 & it1$sim_no==i,paste("theta", 1:k, sep = "")] <- rnorm(k,Y,V)
-#   it1[it1$it==1 & it1$sim_no==i,"mu"] <- rnorm(1,0,10^6) # the initial dist is assumed flat
-#   it1[it1$it==1 & it1$sim_no==i,"A"] <- rinvgamma(1,a+k/2,b)
-#   
-#   it2[it1$it==1 & it1$sim_no==i, c("A","mu",paste("theta", 1:k, sep = ""))] <- rep(mean(Y),k+2)
-#   
+#   it1[it1$it==1 & it1$sim_no==i,paste("theta", 1:k, sep = "")] <- rnorm(k,Y,sqrt(V))
+#   it1[it1$it==1 & it1$sim_no==i,"A"] <- rinvgamma(1,a+(k-1)/2,b)
+#   it1[it1$it==1 & it1$sim_no==i,"mu"] <- rnorm(1,mean(as.numeric(it1[it1$it==1 & it1$sim_no==i,paste("theta", 1:k, sep = "")])),sqrt(it1[it1$it==1 & it1$sim_no==i,"A"]))
+# 
+#   #it2[it1$it==1 & it1$sim_no==i, c("A","mu",paste("theta", 1:k, sep = ""))] <- rep(mean(Y),k+2)
+#   it2[it1$it==1 & it1$sim_no==i, c("A","mu",paste("theta", 1:k, sep = ""))] <- rep(100,k+2)
+# 
 #   for(j in 2:J){
 #     Z <- rnorm(k, 0, 1)
 #     Z_mu <- rnorm(1,0,1)
@@ -81,22 +82,19 @@ nextIt <- function(x, Z, Z_mu, G){
 ```
 
 ```{r}
-# it1_long <- it1 %>% 
+# it1_long <- it1 %>%
 #   pivot_longer("A":"theta18",names_to="par", values_to="val")
-# it2_long <- it2 %>% 
+# it2_long <- it2 %>%
 #   pivot_longer("A":"theta18",names_to="par", values_to="val")
-# diff <- merge(it1_long, it2_long, by=c("it","sim_no","par")) %>% 
+# diff <- merge(it1_long, it2_long, by=c("it","sim_no","par")) %>%
 #   mutate(diff = val.x-val.y)
-```
-
-```{r}
+# 
 # save(diff, file = "diff_JamesStein.RData")
 ```
 
 ```{r}
 load('diff_JamesStein.RData')
 ```
-
 
 ```{r}
 diff_sum <- diff %>%
@@ -125,7 +123,7 @@ diff_sum %>%
 ## Find the constant $K$ from theorem 4.4
 
 ```{r}
-sup_ratio <- 1/(2*pi)^(k/2)
+sup_ratio <- 1/((2*pi*b)^((k-1)/2))*gamma(a+(k-1)/2)/gamma(a)
 sup_ratio
 ```
 ```{r}
@@ -204,15 +202,31 @@ K
 diff_sum %>%
   mutate(diff = diff*K) %>% 
   group_by(it) %>% 
-  summarize(mean_val = mean(abs(diff)), max_val = max(abs(diff)), min_val = min(abs(diff)), lq_val =  quantile(diff, probs = c(0.25)), uq_val = quantile(diff, probs = c(0.75))) %>% 
+  summarize(mean_val = mean(abs(diff)), max_val = max(abs(diff)), min_val = min(abs(diff)),
+            lq1_val =  quantile(diff, probs = c(0.05)), 
+            uq1_val = quantile(diff, probs = c(0.95)),
+            lq2_val =  quantile(diff, probs = c(0.1)), 
+            uq2_val = quantile(diff, probs = c(0.9)),
+            lq3_val =  quantile(diff, probs = c(0.2)), 
+            uq3_val = quantile(diff, probs = c(0.8)),
+            lq4_val =  quantile(diff, probs = c(0.3)), 
+            uq4_val = quantile(diff, probs = c(0.7)),
+            lq5_val =  quantile(diff, probs = c(0.4)), 
+            uq5_val = quantile(diff, probs = c(0.6))) %>% 
+  filter(it>2) %>% 
   ggplot(aes(x = it), ylim=c(0,10^6)) + 
-  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "grey70", alpha=0.5) + 
-  geom_ribbon(aes(ymin = lq_val, ymax = uq_val), fill = "grey70", alpha=0.750) +
+  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "skyblue", alpha=0.15) + 
+  geom_ribbon(aes(ymin = lq1_val, ymax = uq1_val), fill = "skyblue", alpha=0.2) +
+  geom_ribbon(aes(ymin = lq2_val, ymax = uq2_val), fill = "skyblue", alpha=0.4) +
+  geom_ribbon(aes(ymin = lq3_val, ymax = uq3_val), fill = "skyblue", alpha=0.6) +
+  geom_ribbon(aes(ymin = lq4_val, ymax = uq4_val), fill = "skyblue", alpha=0.8) +
+  geom_ribbon(aes(ymin = lq5_val, ymax = uq5_val), fill = "skyblue", alpha=0.9) +
   scale_y_log10() +
-  geom_line(aes(y = mean_val), size=1) + geom_hline(yintercept=0.01) +
-  theme(legend.position = "none") +
+  geom_line(aes(y = mean_val), size=1) + geom_hline(yintercept=0.01, linetype=2) +
+  theme_bw(base_size = 13) +
   #labs(title = TeX("Value of $||(\\theta_n,\\mu_n,A_n)-(\\theta_{\\infty},\\mu_{\\infty},A_{\\infty})||_1$"), subtitle = "Based on 1000 simulations") +
-  xlab("n=iteration") + ylab(TeX("Logscale of $K||(\\theta_n,\\mu_n,A_n)-(\\theta_{\\infty},\\mu_{\\infty},A_{\\infty})||_1$"))
+  xlab("n=iteration") + ylab(TeX("Logscale of $W(L(\\theta_n,\\mu_n,A_n),\\pi)$")) +
+  geom_text(aes(19,0.0001,label = 'y=0.01', vjust = -1)) 
 ```
 
 
@@ -243,51 +257,68 @@ M*K
 
 Comparing our bound to the other bounds outlined in table 1.
 ```{r}
-diff_sum %>%
+crn_val <- diff_sum %>%
   group_by(it) %>% 
   summarize(crn_val = mean(diff*K*M))
-```
-```{r}
-#initializing the chains. it1~nu and it2
-mean(abs((rinvgamma(1000,a+k/2,b)-rep(mean(Y),1000))))
-```
 
-```{r}
-meandiff1 <- mean(abs((rinvgamma(1000,a+k/2,b)-rep(mean(Y),1000))))
+#initializing the chains. it1~nu and it2
+#meandiff1 <- mean(abs((rinvgamma(1000,a+(k-1)/2,b)-rep(mean(Y),1000))))
+meandiff1 <- mean(abs((rinvgamma(1000,a+(k-1)/2,b)-rep(100,1000))))
 
 it <- 1:138
-dnm_val <- 0.967^(it)+1.17*0.935^(it)
+dnm_val <- 0.967^(it)+(1.17+k*(mean(Y)-100)^2)*0.935^(it)
 oneshot_val <- M*meandiff1*(1/18)^(it-1)
 
-head(data.frame(dnm_val,oneshot_val),n=10)
+#head(data.frame(dnm_val,oneshot_val),n=10)
+
+dfTV_all <- data.frame(it=1:138, DnM = dnm_val,oneshot_val) %>% 
+  left_join(crn_val, by='it')
+
+colnames(dfTV_all) <- c('it','DnM','One Shot', 'CRN')
+head(dfTV_all, n=10)
 ```
 
 ```{r}
-diff_sum %>%
-  group_by(it) %>% 
-  summarize(crn_val = mean(abs(diff))) %>% 
-  filter(it<11)
+dfTV_all %>%
+  pivot_longer(cols=c('DnM','One Shot', 'CRN'), names_to = 'bound', values_to = 'val') %>% 
+  filter(it<10) %>% 
+  ggplot(aes(x = it, y = val, colour=bound)) +
+  geom_line(aes(lty=bound), size=1) +
+  xlab(TeX("n=iteration")) + ylab(TeX("Logscale of $||L(\\theta_n,\\mu_n, A_n)-\\pi||_{TV}$")) +
+  theme_bw(base_size=13) + theme(legend.position= 'bottom') + scale_y_log10() +
+  scale_color_manual(values = c('black','skyblue','plum3'))
+```
+
+
+```{r}
+# diff_sum %>%
+#   group_by(it) %>% 
+#   summarize(crn_val = mean(abs(diff))) %>% 
+#   filter(it<11)
 ```
 ```{r}
-it <- 138
-0.967^(it)+1.17*0.935^(it)
+it <- 249
+0.967^(it)+(1.17+k*(mean(Y)-100)^2)*0.935^(it)
+
+#one shot val at it 249
+M*meandiff1*(1/18)^(it-1)
 ```
 
 ```{r}
-mean_it <- diff %>% 
-  group_by(it) %>% 
-  mutate(diff=mean(abs(diff))) %>% 
-  filter(it==1)
-
-mean(mean_it$diff)
+# mean_it <- diff %>% 
+#   group_by(it) %>% 
+#   mutate(diff=mean(abs(diff))) %>% 
+#   filter(it==1)
+# 
+# mean(mean_it$diff)
 ```
 ```{r}
-mean_it <- diff %>% 
-  filter(par=='A') %>% 
-  group_by(it) %>% 
-  mutate(diff=mean(abs(diff))) %>% 
-  filter(it==1)
-
-mean(mean_it$diff)
+# mean_it <- diff %>% 
+#   filter(par=='A') %>% 
+#   group_by(it) %>% 
+#   mutate(diff=mean(abs(diff))) %>% 
+#   filter(it==1)
+# 
+# mean(mean_it$diff)
 ```
 
