@@ -1,0 +1,542 @@
+---
+title: "VarComp_v5"
+output: html_document
+date: "2025-08-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(matlib)
+library(cubature)
+library(latex2exp)
+library(ggplot2)
+library(MCMCpack)
+library(coda)
+library(Rmpfr)
+library(dplyr)
+```
+
+#Variance Component Model Gibbs Sampler
+
+The following is the data of interest. The rows represent the batches of which there are 6 in total. Each batch contains 5 elements.
+```{r}
+# Matrix giving the famous "dyestuff" batch data from Davies (1967).
+# Defined so Ydye[i,j] equals yield (in grams) from j'th sample of i'th batch.
+# Valid for i=1,2,3,4,5,6, and j=1,2,3,4,5, i.e. I=6 and J=5.
+
+Ydye = t( matrix(
+	c(1545, 1440, 1440, 1520, 1580,
+         1540, 1555, 1490, 1560, 1495,
+         1595, 1550, 1605, 1510, 1560,
+         1445, 1440, 1595, 1465, 1545,
+         1595, 1630, 1515, 1635, 1625,
+         1520, 1455, 1450, 1480, 1445), nrow=5) )
+
+J <- dim(Ydye)[2] # number of samples in each batch
+I <- dim(Ydye)[1] # number of batches
+```
+
+The following code runs a Gibbs sampler for the model.
+
+```{r}
+gibbs_update_u <- function(x, z = rnorm(1,0,1)){
+  a <- (a3*x[1]+b3*sum(x[4:(3+I)]))/(x[1]+I*b3)
+  b <- sqrt(b3*x[1]/(x[1] + I*b3))
+  x[3] <- a + b*z
+  return(x)
+}
+
+gibbs_update_theta <- function(x, z = rnorm(I,0,1)){
+  a <- (x[3]/x[1]+apply(Ydye, MARGIN = 1, FUN = sum)/x[2])/(1/x[1]+J/x[2])
+  b <- sqrt(1/(1/x[1] + J/x[2]))
+  b <- sqrt(x[1]*x[2]/(x[2] + J*x[1]))
+  x[4:(3+I)]  <- a + b * z
+  return(x)
+}
+
+gibbs_update_V <- function(x, g = rgamma(1, shape = a1+I/2, rate = 1)){
+  b <- b1 +sum((x[4:(3+I)]-x[3])^2)/2
+  x[1]  <- b/g
+  return(x)
+}
+
+gibbs_update_W <- function(x, g = rgamma(1, shape = a2+I*J/2, rate = 1)){
+  b <- b2 +sum((Ydye-x[4:(3+I)])^2)/2
+  x[2]  <- b/g
+  return(x)
+}
+```
+
+Generate the initial value of $Y_0\sim \nu$
+```{r}
+par <- c(0.5,1,1,1, 0, 10^(12))# hyperparameters from Cowles and Rosenthal are (0.5,1,0,0,0, 10^12). Difference are because limitations on Lemma 4.1.
+#par <- c(6,6,1,6000, 1500, 500)
+# par <- c(6, 6, 6, 6000, 1500, 500)
+a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+```
+
+```{r}
+simVCM <- function(sim_no){
+  a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+  
+  V <- rinvgamma(1, 2*a1+1, 2*b1-1)
+  W <- rinvgamma(1, 2*a2+1, 2*b2)
+  u <- rnorm(1, a3, sqrt(b3))
+  theta <- rnorm(I, apply(Ydye,1,mean), sqrt(W/(2*J)))
+  Y <- c(V[1], W[1], u[1], theta)
+
+  M <- 1000
+  # initial value of X coincides with eqn 6 from paper ie. V(X)=0
+  V <- rinvgamma(1, a1, b1)
+  W <- rinvgamma(1, a2, b2)
+  #u <- rnorm(1,mean(Ydye),1)
+  u <- mean(Ydye)
+  v1 <- sum((Ydye-apply(Ydye,1,mean))^2)/(J*I); v2 <- sum((apply(Ydye,1,mean)-mean(Ydye))^2)/I;
+  theta <- (J*v1*apply(Ydye,1,mean)+v2*mean(Ydye))/(J*v1+v2)
+  #theta <- rnorm(I, theta, 1)
+  X <- c(V[1], W[1], u, theta)
+  
+  df_X <- data.frame(t(c(X,0,0)))
+  df_Y <- data.frame(t(c(Y,0,0)))
+  colnames(df_X) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+  colnames(df_Y) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+  
+  a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+    
+  for (i in 1:M) {
+      for (coord in 1:4){
+        if (coord == 3) { # Modify coordinate u
+          z = rnorm(1,0,1)
+          X <- gibbs_update_u(X, z)
+          Y <- gibbs_update_u(Y, z)
+        }
+        else if (coord == 4) { # Modify all I thetas
+          z = rnorm(I,0,1)
+          X <- gibbs_update_theta(X, z)
+          Y <- gibbs_update_theta(Y, z)
+        }
+        else if (coord == 1) { # Modify coordinate V
+          g = rgamma(1, shape = a1+I/2, rate = 1)
+          X <- gibbs_update_V(X, g)
+          Y <- gibbs_update_V(Y, g)
+        }
+        else if (coord == 2) { # Modify coordinate W
+          g = rgamma(1, shape = a2+I*J/2, rate = 1)
+          X <- gibbs_update_W(X,g)
+          Y <- gibbs_update_W(Y,g)
+        }
+        df_X <- rbind(df_X,c(X, coord, i))
+        df_Y <- rbind(df_Y,c(Y, coord, i))
+      }
+  }
+
+  df_X1 <- df_X %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "X")
+  df_Y1 <- df_Y %>% pivot_longer(cols = V:theta6, names_to = "names", values_to = "Y")
+  
+  df <- left_join(df_X1, df_Y1, by=c('coord','iter','names'))
+  df <- df %>% mutate(diff = X-Y)
+  
+  df_diff <- df %>%
+    filter(coord == 1) %>%
+    mutate(sim_no=as.character(sim_no))
+  return(df_diff)
+}
+```
+
+```{r}
+# df_diff_all <- simVCM(1)
+```
+
+```{r}
+# df_diff_all <- simVCM(1)
+# for(i in 2:500){
+#   df <- simVCM(i)
+#   df_diff_all <- rbind(df_diff_all, df)
+# }
+# 
+#  save(df_diff_all, file = "df_diff_all_50_VarComp_CowlesRose.RData")
+```
+
+
+```{r}
+#load('df_diff_all_VarComp.RData')
+load('df_diff_all_50_VarComp_CowlesRose.RData')
+```
+
+Calculate $K$ for the variance component model.
+```{r}
+g <- function(x, Y=Ydye, para=par){
+  mu <- x[1]; theta <- x[2:length(x)]
+  a1 <- para[1]; b1 <- para[2]; a2 <- para[3]; b2 <- para[4]; a3 <- para[5]; b3 <- para[6];
+  
+  a1_new <- a1+I/2
+  a2_new <- a2+J*I/2
+  b1_new <- b1+sum((theta-mu)^2)/2
+  b2_new <- b2+sum((Ydye-theta)^2)/2
+  #b2_new <- b2+sum(Ydye^2)-2*J*sum(theta*apply(Ydye,1,mean))+J*sum(theta^2)
+
+  g <- b1_new^(-a1_new)*exp(-(mu-a3)^2/(2*b3))*b2_new^(-a2_new)
+  #g <- b2_new^(-a2_new) # this is a lower bound function on g
+  return(g) 
+}
+```
+
+```{r}
+a_w <- I*(J-1)/2-1
+b_w <- 1
+a_v <- I/2-1
+b_v <- 1
+
+S <- -(sum(J*apply(Ydye, 1, mean)^2)-sum(Ydye^2))
+R <- I*J-I/2
+
+a1_new <- a1+I/2
+a2_new <- a2+J*I/2
+
+C1 <- gamma(a1)*gamma(a2)*(2*pi)^(I*J/2+(I+1)/2)*sqrt(b3)/
+  (gamma(a1_new)*b1^a1*gamma(a2_new)*b2^a2)
+#C2 <- b2^(2*a2)*gamma(2*a2+1)*b1^(2*a1)*gamma(2*a1+1)*gamma(R-1)*gamma(I/2-1)/
+#  (2^(I+I*J)*pi^(R+I/2)*J^(I/2)*gamma(a2)^2*(2*b2)^(2*a2+1)*gamma(a1)^2*(2*b1-1)^(2*a1+1)*S^(R-1))
+C2 <- b1^(2*a1)*gamma(2*a1+1)*b2^(2*a2)*gamma(2*a2+1)*gamma(I/2-1)*gamma(R-1)/
+  (gamma(a1)^2*(2*b1-1)^(2*a1+1)*gamma(a2)^2*(2*b2)^(2*a2+1)*J^(I/2)*2^(I+J*I)*pi^(R+I/2)*S^(R-1))
+
+#C <- gamma(a1-2)*gamma(a2)*2*(2*pi)^(I+1)*b3*gamma(R-1)/
+#  (gamma(a1_new)*gamma(a2_new)*(b1-1)^(a1-2)*J^(I/2)*(b2-1)^a2*(1-S)^(R-1))
+  
+xl <- rep(200,I+1)
+xu <- rep(2900,I+1)
+
+int1 <- adaptIntegrate(g, lowerLimit = xu, upperLimit = xl)
+L <- int1$integral
+
+K <- C1*sqrt(C2)/L
+K
+```
+
+```{r}
+r <- 1
+df_diff_K <- df_diff_all %>% 
+  group_by(sim_no, iter) %>% 
+  summarise(diff=sum(abs(diff))) %>% 
+  mutate(diff = diff^(2*r))
+```
+
+```{r}
+df_diff_K %>% 
+  group_by(iter) %>%
+  summarise(mean_diff = mean(diff), var_diff = var(diff)) %>% 
+  mutate(uci = K^(1/r)*(mean_diff+qnorm(0.99)*sqrt(var_diff/500))^(1/(2*r)),
+         lci = K^(1/r)*(mean_diff-qnorm(0.99)*sqrt(var_diff/500))^(1/(2*r)),
+         estimate = K^(1/r)*mean_diff^(1/(2*r))) %>% 
+  dplyr::select(iter, estimate, uci) %>% 
+  pivot_longer(cols = estimate:uci, names_to = "Bound", values_to = "value")  %>% 
+  filter(iter < 500) %>% 
+  ggplot(aes(x = iter, y = value, color = Bound), ylim=c(0,10^6)) + 
+  scale_color_manual(labels = c("Estimate", "99% upper C.I."), values = c("estimate" = "black", "uci" = "red")) +
+  geom_line() + 
+  scale_y_log10() +
+  theme_bw(base_size=13) + theme(legend.position= 'bottom') +
+  geom_hline(yintercept=0.01, linetype=2) +
+  xlab("n=iteration") + ylab(TeX("Logscale of $W(L(\\theta_n,\\mu_n,A_n),\\pi)$")) +
+  geom_text(aes(24,0.0001,label = 'y=0.01', vjust = -1, colour = 'black')) 
+```
+
+
+```{r}
+c1=(2/I)*(I/2+a1)*(1+sqrt(2/b1)*1/I+1/(2*b1*I^2))^(I/2+a1-1)*(sqrt(2/b1)+1/(b1*I))
+
+c2=2/(I*J^(3/2))*((I*J)/2+a2)*(1+2/(sqrt(b2)*I*J)+1/(b2*I^2*J^2))^(I*J/2+a2-1)*(2*sqrt(J/b2)+2/(b2*sqrt(J)*I))
+
+TV <- (c1+c2)*J^(1.5)*I
+TV
+K^(1/r)*TV
+```
+
+```{r}
+dfTV_all <- df_diff_K %>% 
+  group_by(iter) %>%
+  summarise(mean_diff = mean(diff), var_diff = var(diff)) %>% 
+  mutate(uci = TV*K^(1/r)*(mean_diff+qnorm(0.99)*sqrt(var_diff/500))^(1/(2*r)),
+         lci = TV*K^(1/r)*(mean_diff-qnorm(0.99)*sqrt(var_diff/500))^(1/(2*r)),
+         CRN = TV*K^(1/r)*mean_diff^(1/(2*r)),
+         DnM =0.72^(0.000152*iter)+0.7905*(0.99985)^iter)
+```
+
+```{r}
+df_diff_K %>% 
+  group_by(iter) %>%
+  summarise(mean_diff = mean(diff), var_diff = var(diff)) %>% 
+  mutate(uci = TV*K^(1/r)*(mean_diff+qnorm(0.99)*sqrt(var_diff/500))^(1/(2*r)),
+         lci = TV*K^(1/r)*(mean_diff-qnorm(0.99)*sqrt(var_diff/500))^(1/(2*r)),
+         CRN = TV*K^(1/r)*mean_diff^(1/(2*r)),
+         DnM =0.72^(0.000152*iter)+0.7905*(0.99985)^iter) %>% 
+  dplyr::select(iter, CRN, uci, DnM) %>% 
+  filter(iter<500) %>% 
+  pivot_longer(cols = CRN:DnM, names_to = "Bound", values_to = "value")  %>% 
+  ggplot(aes(x = iter, y = value, color = Bound), ylim=c(0,10^6)) + 
+  scale_color_manual(labels = c("CRN Estimate", "DnM", "CRN 99% upper C.I."), values = c("CRN" = "black", "uci" = "red", "DnM"="grey")) +
+  geom_line(aes(), size=0.75) + 
+  scale_y_log10() +
+  theme_bw(base_size=13) + theme(legend.position= 'bottom') +
+  geom_hline(yintercept=0.01, linetype=2) +
+  xlab("n=iteration") + ylab(TeX("Logscale of $||L(\\theta_n,\\mu_n, A_n)-\\pi||_{TV}$")) +
+  geom_text(aes(24,0.0005,label = 'y=0.01', vjust = -1, colour = 'black')) 
+```
+
+```{r}
+dfTV_all %>% 
+  filter(CRN<0.01) %>% 
+  filter(iter == min(iter))
+```
+
+```{r}
+dfTV_all %>% 
+  filter(iter %in% c(10,50,100,250,461)) %>% 
+  dplyr::select(iter, mean_diff,lci,CRN,uci,DnM)
+```
+
+
+# Generate traceplots
+
+```{r}
+simX <- function(sim_no){
+  a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+
+  M <- 12000
+  M <- 100
+  
+  V <- rinvgamma(1, a1, b1)
+  W <- rinvgamma(1, a2, b2)
+  u <- rnorm(1,mean(Ydye),1)
+  v1 <- sum((Ydye-apply(Ydye,1,mean))^2)/(J*I); v2 <- sum((apply(Ydye,1,mean)-mean(Ydye))^2)/I;
+  theta <- (J*v1*apply(Ydye,1,mean)+v2*mean(Ydye))/(J*v1+v2)
+  theta <- rnorm(I, theta, 1)
+  X <- c(V[1], W[1], u, theta)
+  
+  
+  df_X <- data.frame(t(c(X,0,0)))
+  #df_Y <- data.frame(t(c(Y,0,0)))
+  colnames(df_X) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+  #colnames(df_Y) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+  
+  a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+    
+  for (i in 1:M) {
+      for (coord in 1:4){
+        if (coord == 3) { # Modify coordinate u
+          z = rnorm(1,0,1)
+          X <- gibbs_update_u(X, z)
+        }
+        else if (coord == 4) { # Modify all I thetas
+          z = rnorm(I,0,1)
+          X <- gibbs_update_theta(X, z)
+        }
+        else if (coord == 1) { # Modify coordinate V
+          g = rgamma(1, shape = a1+I/2, rate = 1)
+          X <- gibbs_update_V(X, g)
+        }
+        else if (coord == 2) { # Modify coordinate W
+          g = rgamma(1, shape = a2+I*J/2, rate = 1)
+          X <- gibbs_update_W(X,g)
+        }
+        df_X <- rbind(df_X,c(X, coord, i))
+      }
+  }
+  df_X <- df_X %>% 
+    mutate(sim_no=as.character(sim_no))
+  return(df_X)
+}
+```
+
+```{r}
+# df_X <- simX(1)
+# for(i in 2:10){
+#   df <- simX(i)
+#   df_X <- rbind(df_X, df)
+#   #print(i)
+# }
+# 
+# save(df_X, file = "df_X_1500_VarComp_CowlesRose.RData")
+```
+
+```{r}
+# load('df_X_VarComp.RData')
+load('df_X_1500_VarComp_CowlesRose.RData')
+```
+
+```{r}
+df_X %>% 
+  filter(coord == 1, iter < 75) %>% 
+  dplyr::select(V:mu,iter,sim_no) %>% 
+  pivot_longer(cols= V:mu, names_to = 'coord', values_to = 'val') %>% 
+  ggplot(aes(x = iter, y = val)) + facet_wrap(vars(coord), scales = "free") +
+  geom_line(aes(col=sim_no)) + theme_bw() + theme(legend.position="none")
+```
+```{r}
+df_X %>% 
+  filter(coord == 1, iter < 75) %>% 
+  dplyr::select(theta1:theta6,iter,sim_no) %>% 
+  pivot_longer(cols= theta1:theta6, names_to = 'coord', values_to = 'val') %>% 
+  ggplot(aes(x = iter, y = val)) + facet_wrap(vars(coord), scales = "free") +
+  geom_line(aes(col=sim_no)) + theme_bw() + theme(legend.position="none")
+```
+
+## Gelman-Rubin Diagnostic
+
+```{r}
+simX_GR <- function(X, M, sim_no){
+  a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+  
+  df_X <- data.frame(t(c(X,0,0)))
+  colnames(df_X) <- c("V","W","mu",paste("theta",1:I, sep=""),"coord","iter")
+  
+  a1 <- par[1]; b1 <- par[2]; a2 <- par[3]; b2 <- par[4]; a3 <- par[5]; b3 <- par[6];
+    
+  for (i in 1:M) {
+      for (coord in 1:4){
+        if (coord == 3) { # Modify coordinate u
+          z = rnorm(1,0,1)
+          X <- gibbs_update_u(X, z)
+        }
+        else if (coord == 4) { # Modify all I thetas
+          z = rnorm(I,0,1)
+          X <- gibbs_update_theta(X, z)
+        }
+        else if (coord == 1) { # Modify coordinate V
+          g = rgamma(1, shape = a1+I/2, rate = 1)
+          X <- gibbs_update_V(X, g)
+        }
+        else if (coord == 2) { # Modify coordinate W
+          g = rgamma(1, shape = a2+I*J/2, rate = 1)
+          X <- gibbs_update_W(X,g)
+        }
+        df_X <- rbind(df_X,c(X, coord, i))
+      }
+  }
+  df_X <- df_X %>% 
+    mutate(sim_no=as.character(sim_no)) %>% 
+    filter(coord == 4) %>% 
+    dplyr::select(V:theta6, iter, sim_no)
+  return(df_X)
+}
+```
+
+```{r}
+# V <- seq(0.5,3.5,1)
+# W <- seq(1000,20000, 4000)
+# u <- seq(1400,1600,50)
+# 
+# X <- expand.grid(V,W,u)
+# X <- cbind(X,X[,3],X[,3],X[,3],X[,3],X[,3],X[,3])
+# 
+# l <- nrow(X)
+# 
+# M <- 1000
+# X_sim <- simX_GR(as.vector(X[1,], mode = "numeric"), M, 1)
+# for(i in 2:l){
+#   df <- simX_GR(as.vector(X[i,], mode = "numeric"), M, i)
+#   X_sim <- rbind(X_sim, df)
+# }
+# save(X_sim, file = "X_sim_VarComp.RData")
+```
+
+```{r}
+# load('X_sim_VarComp.RData')
+```
+
+```{r}
+# iter <- seq(100,500, 100)
+# # Gelman Rubin diagnostic for V
+# gr_diagV <- c(10, 100, 500, 1000, 5000, 10000, 15000, 20000) # values must be less than M+1
+# gr_diagV <- iter
+# for(j in 1:length(gr_diagV)){
+#   X_simJ <- X_sim %>%
+#     filter(iter <= gr_diagV[j])
+# 
+#   X_simJ_i <- X_simJ %>% filter(sim_no == 1) %>%
+#     dplyr::select(V)
+#   it_list <- list(mcmc(X_simJ_i))
+#   for(i in 2:l){
+#     X_simJ_i <- X_simJ %>% filter(sim_no == i) %>% dplyr::select(V)
+#     it_list <- append(it_list, list(mcmc(X_simJ_i)))
+#   }
+#   gr <- gelman.diag(it_list)
+#   gr_diagV[j] <- gelman.diag(it_list)$psrf[1,1]
+# }
+# gr_diagV
+```
+```{r}
+# # Gelman Rubin diagnostic for W
+# gr_diagW <- c(10, 100, 500, 1000, 5000, 10000, 15000, 20000) # values must be less than M
+# gr_diagW <- iter 
+# for(j in 1:length(gr_diagW)){
+#   X_simJ <- X_sim %>%
+#     filter(iter <= gr_diagW[j])
+# 
+#   X_simJ_i <- X_simJ %>% filter(sim_no == 1) %>%
+#     dplyr::select(W)
+#   it_list <- list(mcmc(X_simJ_i))
+#   for(i in 2:l){
+#     X_simJ_i <- X_simJ %>% filter(sim_no == i) %>% dplyr::select(W)
+#     it_list <- append(it_list, list(mcmc(X_simJ_i)))
+#   }
+#   gr <- gelman.diag(it_list)
+#   gr_diagW[j] <- gelman.diag(it_list)$psrf[1,1]
+# }
+# gr_diagW
+```
+```{r}
+# # Gelman Rubin diagnostic for mu
+# gr_diagU <- c(10, 100, 500, 1000, 5000, 10000, 15000, 20000) # values must be less than M
+# gr_diagU <- iter
+# for(j in 1:length(gr_diagU)){
+#   X_simJ <- X_sim %>%
+#     filter(iter <= gr_diagU[j])
+# 
+#   X_simJ_i <- X_simJ %>% filter(sim_no == 1) %>%
+#     dplyr::select(mu)
+#   it_list <- list(mcmc(X_simJ_i))
+#   for(i in 2:l){
+#     X_simJ_i <- X_simJ %>% filter(sim_no == i) %>% dplyr::select(mu)
+#     it_list <- append(it_list, list(mcmc(X_simJ_i)))
+#   }
+#   gr <- gelman.diag(it_list)
+#   gr_diagU[j] <- gelman.diag(it_list)$psrf[1,1]
+# }
+# gr_diagU
+```
+```{r}
+# # Gelman Rubin diagnostic for theta 1
+# gr_diagT <- c(10, 100, 500, 1000, 5000, 10000, 15000, 20000) # values must be less than M
+# gr_diagT <- iter 
+# for(j in 1:length(gr_diagT)){
+#   X_simJ <- X_sim %>%
+#     filter(iter <= gr_diagT[j])
+# 
+#   X_simJ_i <- X_simJ %>% filter(sim_no == 1) %>%
+#     dplyr::select(theta1)
+#   it_list <- list(mcmc(X_simJ_i))
+#   for(i in 2:l){
+#     X_simJ_i <- X_simJ %>% filter(sim_no == i) %>% dplyr::select(theta1)
+#     it_list <- append(it_list, list(mcmc(X_simJ_i)))
+#   }
+#   gr <- gelman.diag(it_list)
+#   gr_diagT[j] <- gelman.diag(it_list)$psrf[1,1]
+# }
+# gr_diagT
+```
+
+```{r}
+# gr_diag <- data.frame(it = iter/2, V = gr_diagV, W = gr_diagW, mu = gr_diagU, theta1 = gr_diagT)
+# save(gr_diag, file = "gr_diag_VarComp.RData")
+```
+
+```{r}
+load('gr_diag_VarComp.RData')
+```
+
+```{r}
+gr_diag
+```

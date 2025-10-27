@@ -18,8 +18,6 @@ library(MCMCpack)
 library(coda)
 ```
 
-The following code generated the graphs and calculations found in "Applying the common random number technique as a Markov chain convergence diagnostic."
-
 ## Bayesian Regression Gibbs Sampler
 
 Numerical example
@@ -63,72 +61,78 @@ colnames(df) <- c("carbs", "age", "weight", "protein")
 # setting priors: beta ~ N(b_0,E_0) sigma^2 ~ Inv-Chi^2(v_0, c_0)
 b_0 <- rep(0,4)
 E_0 <- diag(4)
-v_0 <- 1
-#v_0 <- 5
-#c_0 <- 6
-c_0 <- 10
+v_0 <- 6
+c_0 <- 140
 ```
-
-Consistent with equation (18) we define 
-$$g(\beta,\sigma^2) =  \frac{1}{(\sigma^2)^{(n+\upsilon_0)/2+1}}\exp\left(-\frac{1}{2\sigma^2} (y-X\beta)^T(y-X\beta) -\frac{1}{2}(\beta-\beta_0)^T\Sigma_{\beta}^{-1} (\beta-\beta_0) -\frac{\upsilon_0 c_0^2}{\sigma^2}\right)$$
-We further define 
-$$f(\beta,\sigma^2) = \log(g(\beta,\sigma^2))$$
 
 
 ```{r}
-# g(x,y)= g(beta,sigma^2) as defined in equation 6
-g <- function(x){ 
+L_int <- function(x){ 
   b <- c(x[1], x[2], x[3], x[4])
-  o <- x[5]
-  z = exp(-((n+v_0)/2+1)*log(o) - 1/(2*o)*t(Y-(X %*% b)) %*% (Y-(X %*% b)) - 0.5*t(b-b_0) %*% inv(E_0) %*% (b-b_0) - v_0*c_0/o)
-  return(z)}
-
-f <- function(x){ 
-  b <- c(x[1], x[2], x[3], x[4])
-  o <- x[5]
-  z = -((n+v_0)/2+1)*log(o) - 1/(2*o)*t(Y-(X %*% b)) %*% (Y-(X %*% b)) - 0.5*t(b-b_0) %*% inv(E_0) %*% (b-b_0) - v_0*c_0/o
-  return(-z)
+  num <- exp(- 0.5*t(b-b_0) %*% inv(E_0) %*% (b-b_0) )
+  denom <- (v_0*c_0/2 + t(Y-(X %*% b)) %*% (Y-(X %*% b))/2)^((n+v_0)/2)
+  z = num/denom
+  return(z)
   }
 ```
 
-We want to find a lower bound ($L$) on $\int_{\mathbb{R}^4\times \mathbb{R}}g(\beta,\sigma^2)d(\beta,\sigma^2)$. To do so, we apply the following,
-
-$\int_{\mathbb{R}^4\times \mathbb{R}}g(\beta,\sigma^2)d(\beta,\sigma^2)\geq \int_{C}g(\beta,\sigma^2)d(\beta,\sigma^2)\geq e^{\int_{C}f(\beta,\sigma^2)d(\beta,\sigma^2)}$
-
 ```{r}
-x <- c(0.1,0.1,0.1,0.1,0.1)
-x <- optim(x, f)$par
-#c(0.1,0.1,0.1,0.1,0.1)
-#c(0.2,0.2,0.2,0.2,0.2)
-int_f <- adaptIntegrate(f, lowerLimit = x-c(0.1,0.1,0.1,0.1,0.1), upperLimit = x+c(0.1,0.1,0.1,0.1,0.1))
-int_f
-```
-
-```{r}
-L <- exp(-int_f$integral)
+# new version
+#x <- c(0.1,0.1,0.1,0.1,0.1)
+# x <- optim(x, f)$par
+# x[5] <- 5
+# x[1] <- 0
+x <- c(0, -0.01641627, -0.06559585, 2.64055105)
+#x <- c(0.1,0.1,0.1,0.1)
+#x <- beta_hat
+int_f <- adaptIntegrate(L_int, lowerLimit = x-c(1.35,0.05,0.35,0.35), upperLimit = x+c(2.7,0.35,0.35,0.35))
+L <- int_f$integral
 L
 ```
+
 ```{r}
-alpha <- (n+v_0)/2
-beta <- v_0*c_0/2
-K <- 1/L*gamma(alpha)/beta^alpha*(2*pi)^(p/2)
+beta_hat <- inv(t(X)%*%X)%*%t(X)%*%Y
+mle <- t(Y-X%*%beta_hat)%*%(Y-X%*%beta_hat)
+num <- 16*gamma((n+v_0)/2-2)*(2*pi)^(p/2)
+den <- gamma((n+v_0)/2)*mle^2*(v_0*c_0/2)^((n+v_0)/2-2)*exp(2)
+C <- num/den
+C[1,1]
+
+K <- C[1,1]/L
 K
+
 tvbound <- (n+v_0)^2/(2*v_0*c_0)
 tvbound
+K*tvbound
 ```
+```{r}
+alpha <- (n+v_0)/2-2
+beta <- v_0*c_0/2
+alpha
+beta
+```
+
 The following is function that generates $\sigma^2_{n+1}$ given $\sigma^2_n$, equation 19.
 
 ```{r}
 b_hat <- inv(t(X) %*% X) %*% t(X) %*%  Y
 invE_0 <- inv(E_0)
 nextIt <- function(o, Z, G){
-  eigenV <- eigen(t(X) %*% X/o + inv(E_0))
+  V <- t(X) %*% X/o + inv(E_0)
+  # eigenV <- eigen(V)
+  # Q <- eigenV$vectors
+  # L <- diag(eigenV$values)
+  # Vinv12 <-  Q %*% inv(sqrt(L)) %*% inv(Q)
+  #Vinv <-  Q %*% inv(L) %*% inv(Q)
+  Vinv <-  solve(V)
+  eigenV <- eigen(Vinv)
   Q <- eigenV$vectors
   L <- diag(eigenV$values)
   Vinv12 <-  Q %*% inv(sqrt(L)) %*% inv(Q)
-  Vinv <-  Q %*% inv(L) %*% inv(Q)
-  b_tilde <- Vinv %*% (t(X) %*% X %*% b_hat/o + inv(E_0) %*% b_0)
-  W <- X %*% b_tilde - Y + X %*% Vinv12 %*% Z
+  #b_tilde <- Vinv %*% (t(X) %*% X %*% b_hat/o + inv(E_0) %*% b_0)
+  b_tilde <- Vinv %*% (t(X) %*% Y/o + inv(E_0) %*% b_0)
+  #W <- X %*% b_tilde - Y + X %*% Vinv12 %*% Z
+  W <- X %*% (b_tilde + Vinv12 %*% Z) - Y
   o1 <- (v_0*c_0/2 +(t(W) %*% W)/2)/G
   return(o1)
 }
@@ -144,17 +148,17 @@ BetaIt <- function(o, Z){
   Vinv <-  Q %*% inv(L) %*% inv(Q)
   Vinv12 <-  Q %*% inv(sqrt(L)) %*% inv(Q)
   b_tilde <- Vinv %*% (t(X) %*% X %*% b_hat/o + inv(E_0) %*% b_0)
+  #b_tilde <- Vinv %*% (t(X) %*% Y/o + inv(E_0) %*% b_0)
   b <- b_tilde + Vinv12 %*% Z
   return(b)
 }
 ```
 
-Now we apply the common random number technique to generate an estimate of $E[|X_k-Y_k|]$, $N=100$ $I=1000$ and $X_0,Y_0\sim \Gamma^{-1}(\alpha',\beta')=\Gamma^{-1}(10.5,2)$
+Now we apply the common random number technique to generate an estimate of $E[|X_k-Y_k|]$, $N=100$ $I=10000$ and $X_0,X'_0\sim \Gamma^{-1}(\alpha',\beta')=\Gamma^{-1}(11,420)$
 
 ```{r}
-# I = 1000
-# #I = 100
-# J = 200
+# I = 10000 # no of simulations
+# J = 100 # no of iterations
 # # I=10
 # # J=10
 # diff <- matrix(0, I, J)
@@ -176,11 +180,11 @@ Now we apply the common random number technique to generate an estimate of $E[|X
 #     it[j,1] <- nextIt(it[j-1,1], Z, G)
 #     it[j,2] <- nextIt(it[j-1,2], Z, G)
 # 
-#     #Calculate beta
-#     #Z <- rnorm(p, 0, 1)
-#     beta1 <- BetaIt(it[j,1], Z)
-#     beta2 <- BetaIt(it[j,2], Z)
-#     diffB[i,j] <- sum(abs(beta1-beta2))
+#     # # Calculate beta
+#     # Z <- rnorm(p, 0, 1)
+#     # beta1 <- BetaIt(it[j,1], Z)
+#     # beta2 <- BetaIt(it[j,2], Z)
+#     # diffB[i,j] <- sum(abs(beta1-beta2))
 #   }
 # 
 #   diff[i,] <- abs(it[,1]-it[,2])
@@ -211,214 +215,153 @@ Now we apply the common random number technique to generate an estimate of $E[|X
 load('diff_df_BayesReg.RData')
 ```
 
-
-
+```{r}
+r <- 5
+K^(1/r)
+tvbound*(K)^(1/r)
+```
+```{r}
+diff_df
+```
 
 ```{r}
-diff_df %>% 
+diff_sum <- diff_df %>%
   group_by(iter_no) %>% 
-  summarise(mean_val = mean(val), max_val = max(val), min_val = min(val)) %>% 
-  ggplot(aes(x = iter_no)) + 
-  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "grey70", alpha=0.75) +
-  geom_line(aes(y = mean_val)) + 
-  theme(legend.position = "none") +
-  #labs(title = TeX("Value of $||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"), subtitle = "Based on 1000 simulations") +
-  xlab("n=iteration") + ylab(TeX("$||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"))
+  summarize(mean_val = mean(val^r), var_val = var(val^r)) %>% 
+  mutate(lci = tvbound*K^(1/r)*(mean_val-qnorm(0.975)*sqrt(var_val/10000))^(1/r), 
+         uci = tvbound*K^(1/r)*(mean_val+qnorm(0.975)*sqrt(var_val/10000))^(1/r),
+         bnd_est = tvbound*K^(1/r)*(mean_val)^(1/r))
 ```
 ```{r}
-diff_df %>% 
-  mutate(val=val*K) %>% 
-  group_by(iter_no) %>% 
-  summarise(mean_val = mean(val), max_val = max(val), min_val = max(min(val),10^(-6)),
-            lq1_val =  quantile(val, probs = c(0.05)), 
-            uq1_val = quantile(val, probs = c(0.95)),
-            lq2_val =  quantile(val, probs = c(0.1)), 
-            uq2_val = quantile(val, probs = c(0.9)),
-            lq3_val =  quantile(val, probs = c(0.2)), 
-            uq3_val = quantile(val, probs = c(0.8)),
-            lq4_val =  quantile(val, probs = c(0.3)), 
-            uq4_val = quantile(val, probs = c(0.7)),
-            lq5_val =  quantile(val, probs = c(0.4)), 
-            uq5_val = quantile(val, probs = c(0.6))) %>% 
-  ggplot(aes(x = iter_no)) + 
-  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "skyblue", alpha=0.15) +
-  geom_ribbon(aes(ymin = lq1_val, ymax = uq1_val), fill = "skyblue", alpha=0.2) +
-  geom_ribbon(aes(ymin = lq2_val, ymax = uq2_val), fill = "skyblue", alpha=0.4) +
-  geom_ribbon(aes(ymin = lq3_val, ymax = uq3_val), fill = "skyblue", alpha=0.6) +
-  geom_ribbon(aes(ymin = lq4_val, ymax = uq4_val), fill = "skyblue", alpha=0.8) +
-  geom_ribbon(aes(ymin = lq5_val, ymax = uq5_val), fill = "skyblue", alpha=0.9) +
-  geom_line(aes(y = mean_val), size=1) + scale_y_log10()+ 
-  theme(legend.position = "none") + geom_hline(yintercept=0.01, linetype=2) +
-  #labs(title = TeX("Value of $||(\\sigma^2_n,\\beta_n)-(\\sigma^{2'}_n,\\beta'_n)||_1$"), subtitle = "Based on 1000 simulations") +
-  theme_bw(base_size = 13) + xlim(0,100) +
-  xlab("n=iteration") + ylab(TeX("Logscale of $W(L(\\sigma^2_n,\\beta_n),\\pi)$")) +
-  geom_text(aes(100,0.01,label = 'y=0.01', vjust = -1)) 
-```
-```{r}
-first_hit <- diff_df %>% 
-  mutate(val=val*K) %>% 
-  group_by(iter_no) %>% 
-  summarise(diff=mean(val)) %>% 
-  filter(diff<=0.01) %>% 
-  summarise(first_hit=min(iter_no))
-
-first_hit <- first_hit$first_hit
-first_hit
-
-expdiff <- diff_df %>%
-  mutate(val=val*K) %>% 
-  filter(iter_no==first_hit) %>%
-  summarise(expdiff = mean(val))
-expdiff
-
+diff_sum %>% filter(bnd_est<0.01) %>% 
+  filter(iter_no == min(iter_no))
 ```
 
 ```{r}
-K*tvbound
-```
-
-```{r}
-# first_hit <- diff_df %>% 
-#   mutate(val=o*K*tvbound) %>% 
-#   group_by(iter_no) %>% 
-#   summarise(diff=mean(val)) %>% 
-#   filter(diff<=0.01) %>% 
-#   summarise(first_hit=min(iter_no))
-# 
-# first_hit <- first_hit$first_hit
-# first_hit
-# 
-# expdiff <- diff_df %>%
-#   mutate(val=val*K*tvbound) %>% 
-#   filter(iter_no==first_hit) %>%
-#   summarise(expdiff = mean(val))
-# expdiff
-
+diff_sum %>% 
+  dplyr::select(iter_no, bnd_est, uci) %>% 
+  pivot_longer(cols = bnd_est:uci, names_to = "Bound", values_to = "value") %>% 
+  filter(iter_no>2) %>% 
+  ggplot(aes(x = iter_no, y = value, color = Bound), ylim=c(0,10^6)) + 
+  scale_color_manual(labels = c("Estimate", "97.5% upper C.I."), values = c("bnd_est" = "black", "uci" = "red")) +
+  geom_line() + 
+  scale_y_log10() +
+  theme_bw(base_size=13) + theme(legend.position= 'bottom') +
+  geom_hline(yintercept=0.01, linetype=2) +
+  xlab("n=iteration") + ylab(TeX("Logscale of $||L(\\sigma^2_n,\\beta_n)-\\pi||_{TV}$")) +
+  geom_text(aes(100,0.0001,label = 'y=0.01', vjust = -1, colour = 'black')) 
 ```
 
 ## Bound comparison
 
-
 ```{r}
-# Calculation of the Gelman Rubin diagnostic.
-it_init <- seq(5,1000, by =50)
-I = length(it_init)
-
-J = 9
-
-diff <- matrix(0, I, J)
-diffB <- matrix(0, I, J)
-it1 <- matrix(0, I, J)
-it2 <- matrix(0, I, J)
-for(i in 1:I){
-  it <- matrix(0, ncol=2, nrow=J)
-
-  it[1,] <- it_init[i]
-  
-  Z <- rnorm(p, 0, 1)
-  beta1 <- BetaIt(it[1,1], Z)
-  beta2 <- BetaIt(it[1,2], Z)
-  diffB[i,1] <- sum(abs(beta1-beta2))
-  for(j in 2:J){
-    Z <- rnorm(p, 0, 1)
-    G <- rgamma(1, shape = alpha, rate =1)
-    it[j,1] <- nextIt(it[j-1,1], Z, G)
-    it[j,2] <- nextIt(it[j-1,2], Z, G)
-    
-    # #Calculate beta
-    # #Z <- rnorm(p, 0, 1)
-    # beta1 <- BetaIt(it[j,1], Z)
-    # beta2 <- BetaIt(it[j,2], Z)
-    # diffB[i,j] <- sum(abs(beta1-beta2))
-  }
-  
-  it1[i,] <- it[,1]
-}
-
-it_list <- list(mcmc(it1[1,]), mcmc(it1[2,]), mcmc(it1[3,]), mcmc(it1[4,]), mcmc(it1[5,]), mcmc(it1[6,]), mcmc(it1[7,]), mcmc(it1[8,]), mcmc(it1[9,]), mcmc(it1[10,]), mcmc(it1[11,]), mcmc(it1[12,]), mcmc(it1[13,]), mcmc(it1[14,]), mcmc(it1[15,]), mcmc(it1[16,]), mcmc(it1[17,]), mcmc(it1[18,]), mcmc(it1[19,]), mcmc(it1[20,]))
-# it_list <- append(it_list, mcmc(it1[2,]))
-gelman.diag(it_list,transform=TRUE)
-```
-```{r}
-#gelman.plot(it_list)
-```
-```{r}
-traceplot(it_list)
+# # generate overdispersed simulations
+# init_val <- seq(5,1000, by =50)
+# I = length(it_init)
+# J = 200
+# 
+# it <- data.frame(cbind(sort(rep(1:I,J)), rep(1:J,I), matrix(0, I*J, 1)))
+# colnames(it) <- c("sim_no","it", "val")
+# 
+# for(i in 1:I){
+# 
+#   it[it$it==1 & it$sim_no==i, "val"] <- init_val[i]
+# 
+#   for(j in 2:J){
+#     Z <- rnorm(p, 0, 1)
+#     G <- rgamma(1, shape = alpha, rate =1)
+#     it[it$it==j & it$sim_no==i,"val"] <- nextIt(it[it$it==j-1 & it$sim_no==i, "val"], Z, G)
+#   }
+# }
+# save(it, file = "it_BayesReg.RData")
 ```
 
-
-## Calculating the autocorrelation function
 ```{r}
-# I =1000
-# #I = 100
-# J = 9
-# # I=10
-# # J=10
-# diff <- matrix(0, I, J)
-# diffB <- matrix(0, I, J)
+# load('it_BayesReg.RData')
+```
+
+```{r}
+# # Calculation of the Gelman Rubin diagnostic.
+# gr_diag <- seq(4,J,2) # values must be less than M+1
+# for(j in 1:length(gr_diag)){
+#   it_J <- it %>%
+#     filter(it <= gr_diag[j])
+# 
+#   it_J_i <- it_J %>% filter(sim_no == 1) %>%
+#     dplyr::select(val)
+#   it_list <- list(mcmc(it_J_i))
+#   for(i in 2:I){
+#     it_J_i <- it_J %>% filter(sim_no == i) %>% dplyr::select(val)
+#     it_list <- append(it_list, list(mcmc(it_J_i)))
+#   }
+#   gr <- gelman.diag(it_list)
+#   gr_diag[j] <- gelman.diag(it_list)$psrf[1,1]
+# }
+# gr_diag <- data.frame(it=seq(4,J,2)/2,gr=gr_diag)
+# gr_diag
+# save(gr_diag, file = "gr_diag_BayesReg.RData")
+```
+
+```{r}
+load('gr_diag_BayesReg.RData')
+```
+
+```{r}
+gr_diag %>% 
+  ggplot(aes(x = it)) + 
+  geom_line(aes(y = gr), size=1) + 
+  theme(legend.position = "none") + 
+  theme_bw(base_size = 13) + 
+  xlab("n=iteration") + ylab(TeX("Shrink factor")) 
+```
+
+```{r}
+first_hit <- gr_diag %>%
+  filter(gr<=1.05) %>%
+  summarise(first_hit=min(it))
+
+gr_diag %>%
+  filter(it==first_hit$first_hit) 
+
+```
+
+```{r}
+# # Graphing a traceplot, sigma^2_0=100
+# I = 10
+# J = 100
+# 
 # it1 <- matrix(0, I, J)
-# it2 <- matrix(0, I, J)
 # for(i in 1:I){
 #   it <- matrix(0, ncol=2, nrow=J)
 # 
-#   it[1,] <- 1/rgamma(2, shape = alpha, rate = beta)
+#   it[1,] <- 100
 # 
-#   #Z <- rnorm(p, 0, 1)
-#   beta1 <- rnorm(p, 0, 1)
-#   beta2 <- rnorm(p, 0, 1)
-#   diffB[i,1] <- sum(abs(beta1-beta2))
 #   for(j in 2:J){
 #     Z <- rnorm(p, 0, 1)
 #     G <- rgamma(1, shape = alpha, rate =1)
 #     it[j,1] <- nextIt(it[j-1,1], Z, G)
-#     it[j,2] <- nextIt(it[j-1,2], Z, G)
-# 
-#     #Calculate beta
-#     #Z <- rnorm(p, 0, 1)
-#     beta1 <- BetaIt(it[j,1], Z)
-#     beta2 <- BetaIt(it[j,2], Z)
-#     diffB[i,j] <- sum(abs(beta1-beta2))
 #   }
 # 
-# 
 #   it1[i,] <- it[,1]
-#   #it2[i,] <- it[,2]
 # }
-```
-
-```{r}
-#save(it1, file = "it1_BayesReg.RData")
+# 
+# save(it1, file = "it1_BayesReg.RData")
 ```
 
 ```{r}
 load('it1_BayesReg.RData')
 ```
 
-
 ```{r}
-lagmax <- rep(0, dim(it1)[1])
-for (i in 1:length(lagmax)){
-  dfacf <- acf(it1[i,], main="Auto correlation function",  plot=FALSE)
- lagmax[i] <- min(dfacf$lag[dfacf$acf<0.01])
-}
-```
-
-```{r}
-data.frame(lagmax) %>% 
-  filter(lagmax != Inf) %>% 
-  ggplot(aes(x=lagmax)) + geom_histogram(binwidth = 1)
-```
-```{r}
-length(lagmax[lagmax<=9])
-```
-```{r}
-lagmax[lagmax>9]
-```
-
-
-```{r}
-dfacf <- acf(it1[1,], main="Auto correlation function",  plot=FALSE)
- lagmax <- min(dfacf$lag[dfacf$acf<0.01])
- lagmax
- acf(it1[1,], main="Auto correlation function for run 1", lag.max = lagmax)
+data.frame(sim_no=1:10,it1) %>% 
+  pivot_longer(cols = starts_with("X"),
+    names_to = "it",
+    names_prefix = "X",
+    values_to = "val") %>% 
+  mutate(sim_no=as.character(sim_no), it=as.numeric(it)) %>% 
+  ggplot(aes(x = it)) + 
+  geom_line(aes(y = val, col=sim_no)) + 
+  theme(legend.position = "none") + 
+  theme_bw(base_size = 13) + 
+  xlab("n=iteration") + ylab(TeX("Value of $\\sigma^2_n$")) + theme(legend.position = "none")
 ```

@@ -11,6 +11,8 @@ library(tidyverse)
 library(invgamma)
 library(latex2exp)
 library(cubature)
+library(coda)
+library(dplyr)
 ```
 
 ## James Stein Gibbs sampler
@@ -100,10 +102,6 @@ load('diff_JamesStein.RData')
 diff_sum <- diff %>%
   group_by(it, sim_no) %>% 
   summarise(diff=sum(abs(diff)))
-
-diff_sum %>% 
-  group_by(it) %>% 
-  summarize(mean_val = mean(diff), max_val = max(diff), min_val = min(diff))
 ```
 
 ```{r}
@@ -123,10 +121,6 @@ diff_sum %>%
 ## Find the constant $K$ from theorem 4.4
 
 ```{r}
-sup_ratio <- 1/((2*pi*b)^((k-1)/2))*gamma(a+(k-1)/2)/gamma(a)
-sup_ratio
-```
-```{r}
 dlognorm <- function(x, m, sd){
   return(-0.5*log(2*pi*sd^2)-(x-m)^2/(2*sd^2))
 }
@@ -137,96 +131,142 @@ dloginvgamma <- function(x, a, b){
 ```
 
 ```{r}
-logf <- function(x, Y_val=Y, para=par){
+f <- function(x, Y_val=Y, para=par){
   A <- x[1]; mu <- x[2]; theta <- x[3:length(x)]
   if  (A<=0 ){
     return(0)
   }
   a <- para[1]; b <- para[2];
   
-  f_A <- dloginvgamma(A, a, b)
+  f_A <- dinvgamma(A, a, b)
   
-  f_u <- 0;
+  f_u <- 1;
   for(i in 1:length(theta)){
-    f_u <- f_u + dlognorm(mu, theta[i], sqrt(A))
-    #f_theta <- f_theta + dlognorm(Y[1], theta[1], sqrt(V))
-    #f_theta <- dlognorm(Y[1], theta[1], sqrt(V))
+    f_u <- f_u*dnorm(mu, theta[i], sqrt(A))
   }
   
-  f_theta <- 0;
+  f_theta <- 1;
   for(i in 1:length(theta)){
     #f_theta <- f_theta + dlognorm(Y[i], theta[i], sqrt(V))
-    f_theta <- dlognorm(Y_val[i], theta[i], sqrt(V))
+    f_theta <- f_theta*dnorm(Y_val[i], theta[i], sqrt(V))
   }
   
-  logf <- f_A+f_u+f_theta
-  if (logf == -Inf){
-    return(0)
-  }
-  else{
-    return(logf) 
-  }
+  f <- f_A*f_u*f_theta
+  
+  return(f)
 }
 ```
 
 
-```{r}
-# # The initial value of x is 
-# x <- c(b/(a+1), rep(mean(Y),k+1))
-# par <- c(a,b)
-# int1 <- adaptIntegrate(logf, lowerLimit = x-rep(0.47, length(x)), upperLimit = x+rep(0.47, length(x)))
-```
-
-```{r}
-# save(int1, file = "int1_JamesStein.RData")
-```
-
-```{r}
-load('int1_JamesStein.RData')
-```
-
-```{r}
-int1_val <- int1$integral-int1$error
-
-L=exp(int1_val)
-L
-```
 According to equation 15, an upper bound on K is as follows,
 ```{r}
-K <- log(sup_ratio)-int1_val
-K <- exp(K)
-K
+L_int <- function(x, Y_val=Y, para=par){
+  A <- x[1]; mu <- x[2]#; theta <- x[3:length(x)]
+  if  (A<=0 ){
+    return(0)
+  }
+  a <- para[1]; b <- para[2];
+  
+  sumY <- sum((Y_val/V+mu/A)^2/(1/A+1/V)-Y_val^2/V-mu^2/A)
+  
+  g <- A^(-a-1)*exp(-b/A)*(A+V)^(-k/2)*exp(sumY/2)
+  
+  return(g)
+}
 ```
 
 ```{r}
+# par <- c(a,b)
+# x <- c(b/(a+1), mean(Y))
+# xl_interval <- c(2,0.5)
+# xu_interval <- c(1.5,1)
+# xl <- x-xl_interval
+# xu <- x+xu_interval
+# int_f <- adaptIntegrate(L_int, lowerLimit = xl, upperLimit = xu)
+# L <- int_f$integral
+# L
+# 
+# C <- gamma(a+(k-1)/2)*(2*pi)^(1/2)/(b)^(a+(k-1)/2)
+# C
+# K <- C/L
+# K
+# save(K, file = "K_JamesStein.RData")
+```
+```{r}
+load('K_JamesStein.RData')
+```
+
+```{r}
+K
+```
+```{r}
+p <- 1
 diff_sum %>%
-  mutate(diff = diff*K) %>% 
   group_by(it) %>% 
-  summarize(mean_val = mean(abs(diff)), max_val = max(abs(diff)), min_val = min(abs(diff)),
-            lq1_val =  quantile(diff, probs = c(0.05)), 
-            uq1_val = quantile(diff, probs = c(0.95)),
-            lq2_val =  quantile(diff, probs = c(0.1)), 
-            uq2_val = quantile(diff, probs = c(0.9)),
-            lq3_val =  quantile(diff, probs = c(0.2)), 
-            uq3_val = quantile(diff, probs = c(0.8)),
-            lq4_val =  quantile(diff, probs = c(0.3)), 
-            uq4_val = quantile(diff, probs = c(0.7)),
-            lq5_val =  quantile(diff, probs = c(0.4)), 
-            uq5_val = quantile(diff, probs = c(0.6))) %>% 
+  summarize(mean_val = mean(abs(diff)^p), var_val = var(abs(diff)^p)) %>% 
+  mutate(lci = K^(1/p)*(mean_val-qnorm(0.975)*sqrt(var_val/1000))^(1/p), 
+         uci = K^(1/p)*(mean_val+qnorm(0.975)*sqrt(var_val/1000)^(1/p)))
+```
+
+```{r}
+p <- 1
+diff_sum_table <- diff_sum %>%
+  group_by(it) %>% 
+  summarize(mean_val = mean(abs(diff)^p), var_val = var(abs(diff)^p)) %>% 
+  mutate(lci = K^(1/p)*(mean_val-qnorm(0.975)*sqrt(var_val/1000))^(1/p), 
+         uci = K^(1/p)*(mean_val+qnorm(0.975)*sqrt(var_val/1000)^(1/p)))
+
+diff_sum_table[is.na(diff_sum_table)] <- 0
+diff_sum_table[diff_sum_table<0] <- 0
+
+diff_sum_table %>% 
   filter(it>2) %>% 
   ggplot(aes(x = it), ylim=c(0,10^6)) + 
-  geom_ribbon(aes(ymin = min_val, ymax = max_val), fill = "skyblue", alpha=0.15) + 
-  geom_ribbon(aes(ymin = lq1_val, ymax = uq1_val), fill = "skyblue", alpha=0.2) +
-  geom_ribbon(aes(ymin = lq2_val, ymax = uq2_val), fill = "skyblue", alpha=0.4) +
-  geom_ribbon(aes(ymin = lq3_val, ymax = uq3_val), fill = "skyblue", alpha=0.6) +
-  geom_ribbon(aes(ymin = lq4_val, ymax = uq4_val), fill = "skyblue", alpha=0.8) +
-  geom_ribbon(aes(ymin = lq5_val, ymax = uq5_val), fill = "skyblue", alpha=0.9) +
+  geom_ribbon(aes(ymin = lci, ymax = uci), fill = 'grey', alpha=0.5) + 
   scale_y_log10() +
-  geom_line(aes(y = mean_val), size=1) + geom_hline(yintercept=0.01, linetype=2) +
+  geom_line(aes(y = (K*mean_val)^(1/p))) + geom_hline(yintercept=0.01, linetype=2) +
   theme_bw(base_size = 13) +
   #labs(title = TeX("Value of $||(\\theta_n,\\mu_n,A_n)-(\\theta_{\\infty},\\mu_{\\infty},A_{\\infty})||_1$"), subtitle = "Based on 1000 simulations") +
   xlab("n=iteration") + ylab(TeX("Logscale of $W(L(\\theta_n,\\mu_n,A_n),\\pi)$")) +
   geom_text(aes(19,0.0001,label = 'y=0.01', vjust = -1)) 
+```
+```{r}
+p <- 1
+diff_sum_table <- diff_sum %>%
+  group_by(it) %>% 
+  summarize(mean_val = mean(abs(diff)^p), var_val = var(abs(diff)^p)) %>% 
+  mutate(lci = K^(1/p)*(mean_val-qnorm(0.975)*sqrt(var_val/1000))^(1/p), 
+         uci = K^(1/p)*(mean_val+qnorm(0.975)*sqrt(var_val/1000))^(1/p))
+
+diff_sum_table[is.na(diff_sum_table)] <- 0
+diff_sum_table[diff_sum_table<0] <- 0
+
+diff_sum_table %>% 
+  filter(it>2) %>% 
+  ggplot(aes(x = it), ylim=c(0,10^6)) + 
+  geom_line(aes(y = uci), col='red') + 
+  scale_y_log10() +
+  geom_line(aes(y = (K*mean_val)^(1/p))) + geom_hline(yintercept=0.01, linetype=2) +
+  theme_bw(base_size = 13) +
+  xlab("n=iteration") + ylab(TeX("Logscale of $W(L(\\theta_n,\\mu_n,A_n),\\pi)$")) +
+  geom_text(aes(19,0.0001,label = 'y=0.01', vjust = -1)) 
+```
+
+
+```{r}
+diff_sum_table %>% 
+  mutate(bnd_est = (K*mean_val)^(1/p)) %>% 
+  dplyr::select(it, bnd_est, uci) %>% 
+  pivot_longer(cols = bnd_est:uci, names_to = "Bound", values_to = "value") %>% 
+  filter(it>2) %>% 
+  ggplot(aes(x = it, y = value, color = Bound), ylim=c(0,10^6)) + 
+  scale_color_manual(labels = c("Estimate", "97.5% upper C.I."), values = c("bnd_est" = "black", "uci" = "red")) +
+  geom_line() + 
+  scale_y_log10() +
+  theme_bw(base_size=13) + theme(legend.position= 'bottom') +
+  geom_hline(yintercept=0.01, linetype=2) +
+  xlab("n=iteration") + ylab(TeX("Logscale of $W(L(\\theta_n,\\mu_n,A_n),\\pi)$")) +
+  geom_text(aes(19,0.0001,label = 'y=0.01', vjust = -1, colour = 'black')) 
 ```
 
 
@@ -246,28 +286,55 @@ diff_sum %>%
   summarize(mean_val = mean(abs(diff)*K), max_val = max(abs(diff)*K), min_val = min(abs(diff)*K)) %>% 
   filter(it==first_hit)
 ```
+
 Calculate bound on total variation
 ```{r}
 S <- sum((Y-mean(Y))^2)
 
-M <- (S/2)^((k-1)/2)/gamma((k-1)/2)*(S/(k+1))^(-(k-3)/2)*exp(-(k+1)/2)
-M
-M*K
+TV <- (S/2)^((k-1)/2)/gamma((k-1)/2)*(S/(k+1))^(-(k-3)/2)*exp(-(k+1)/2)
+TV
+TV*K
 ```
 
 Comparing our bound to the other bounds outlined in table 1.
+
+```{r}
+# I <- 10000
+# 
+# it1 <- data.frame(cbind(1:I, matrix(100, I, k+2)))
+# thetanames <- c(paste("theta", 1:k, sep = ""))
+# vnames <- c("A","mu",thetanames)
+# cnames <- c("sim_no", vnames)
+# colnames(it1) <- cnames
+# 
+# it2 <- it1
+# for (i in 1:I){
+#   Z <- rnorm(k, 0, 1)
+#   Z_mu <- rnorm(1,0,1)
+#   G <- rinvgamma(1, shape = a+(k-1)/2, 1)
+#   it2[it2$sim_no==i,vnames] <- nextIt(it1[it1$sim_no==i,vnames], Z, Z_mu, G)
+# }
+# 
+# meandiff1 <- mean(abs(it1$A-it2$A))
+# save(meandiff1, file = "meandiff1_JamesStein.RData")
+```
+
+```{r}
+load('meandiff1_JamesStein.RData')
+```
+
 ```{r}
 crn_val <- diff_sum %>%
   group_by(it) %>% 
-  summarize(crn_val = mean(diff*K*M))
+  summarize(crn_val = mean(diff*K*TV))
 
 #initializing the chains. it1~nu and it2
 #meandiff1 <- mean(abs((rinvgamma(1000,a+(k-1)/2,b)-rep(mean(Y),1000))))
-meandiff1 <- mean(abs((rinvgamma(1000,a+(k-1)/2,b)-rep(100,1000))))
+#meandiff1 <- mean(abs((rinvgamma(1000,a+(k-1)/2,b)-rep(100,1000))))
 
 it <- 1:138
 dnm_val <- 0.967^(it)+(1.17+k*(mean(Y)-100)^2)*0.935^(it)
-oneshot_val <- M*meandiff1*(1/18)^(it-1)
+oneshot_val <- TV*meandiff1/(1-1/18)*(1/18)^(it-1)
 
 #head(data.frame(dnm_val,oneshot_val),n=10)
 
@@ -275,18 +342,18 @@ dfTV_all <- data.frame(it=1:138, DnM = dnm_val,oneshot_val) %>%
   left_join(crn_val, by='it')
 
 colnames(dfTV_all) <- c('it','DnM','One Shot', 'CRN')
-head(dfTV_all, n=10)
+head(dfTV_all, n=20)
 ```
 
 ```{r}
 dfTV_all %>%
   pivot_longer(cols=c('DnM','One Shot', 'CRN'), names_to = 'bound', values_to = 'val') %>% 
-  filter(it<10) %>% 
+  filter(it<21) %>% 
   ggplot(aes(x = it, y = val, colour=bound)) +
   geom_line(aes(lty=bound), size=1) +
   xlab(TeX("n=iteration")) + ylab(TeX("Logscale of $||L(\\theta_n,\\mu_n, A_n)-\\pi||_{TV}$")) +
   theme_bw(base_size=13) + theme(legend.position= 'bottom') + scale_y_log10() +
-  scale_color_manual(values = c('black','skyblue','plum3'))
+  scale_color_manual(values = c('black','skyblue','plum3')) + geom_hline(yintercept=0.01, linetype=2) + geom_text(aes(19,0.0001,label = 'y=0.01', vjust = -0.5)) 
 ```
 
 
@@ -301,24 +368,151 @@ it <- 249
 0.967^(it)+(1.17+k*(mean(Y)-100)^2)*0.935^(it)
 
 #one shot val at it 249
-M*meandiff1*(1/18)^(it-1)
+TV*meandiff1*(1/18)^(it-1)
+```
+
+# Produce traceplots
+
+```{r}
+diff %>% 
+  mutate(sim_no = as.character(sim_no)) %>% 
+  filter(sim_no<20, par =='A' | par == 'mu' | par == 'theta1', it <11) %>% 
+  ggplot(aes(x = it, y = val.y)) + facet_wrap(vars(par), scales = "free", labeller = labeller(par =
+    c("A" = "A",
+      "mu" = "mu",
+      "theta1" = "theta 1"))) +
+  geom_line(aes(col=sim_no)) + labs(y="Value", x="Iteration") +
+  theme_bw() + theme(legend.position="none")
 ```
 
 ```{r}
-# mean_it <- diff %>% 
-#   group_by(it) %>% 
-#   mutate(diff=mean(abs(diff))) %>% 
-#   filter(it==1)
-# 
-# mean(mean_it$diff)
+diff %>% 
+  mutate(sim_no = as.character(sim_no)) %>% 
+  filter(sim_no<20, par =='A' | par == 'mu' | par == 'theta1', it>10) %>% 
+  ggplot(aes(x = it, y = val.y)) + facet_wrap(vars(par), scales = "free", labeller = labeller(par =
+    c("A" = "A",
+      "mu" = "mu",
+      "theta1" = "theta 1"))) +
+  geom_line(aes(col=sim_no)) + labs(y="Value", x="Iteration") +
+  theme_bw() + theme(legend.position="none") 
 ```
+# Calculating Gelman Rubin diagnostic
+
 ```{r}
-# mean_it <- diff %>% 
-#   filter(par=='A') %>% 
-#   group_by(it) %>% 
-#   mutate(diff=mean(abs(diff))) %>% 
-#   filter(it==1)
+# # generate overdispersed simulations
 # 
-# mean(mean_it$diff)
+# init_val <- expand.grid(seq(0,150,25), seq(-100,100,50), seq(-100,100,50))
+# init_val <- cbind(init_val, matrix(rep(init_val[,3],k-1), ncol=k-1))
+# 
+# I = dim(init_val)[1]
+# J = 40
+# 
+# it <- data.frame(cbind(sort(rep(1:I,J)), rep(1:J,I), matrix(0, I*J, k+2)))
+# thetanames <- c(paste("theta", 1:k, sep = ""))
+# vnames <- c("A","mu", thetanames)
+# cnames <- c("sim_no","it", vnames)
+# colnames(it) <- cnames
+# 
+# for(i in 1:I){
+# 
+#   it[it$it==1 & it$sim_no==i, c("A","mu",paste("theta", 1:k, sep = ""))] <- init_val[i,]
+# 
+#   for(j in 2:J){
+#     Z <- rnorm(k, 0, 1)
+#     Z_mu <- rnorm(1,0,1)
+#     G <- rinvgamma(1, shape = a+(k-1)/2, 1)
+#     it[it$it==j & it$sim_no==i,vnames] <-
+#       nextIt(it[it$it==(j-1) & it$sim_no==i,vnames], Z, Z_mu, G)
+#   }
+# }
+# 
+# save(it, file = "it_JamesStein.RData")
 ```
 
+```{r}
+# load('it_JamesStein.RData')
+```
+
+```{r}
+# # Calculation of the Gelman Rubin diagnostic.
+# # Gelman Rubin diagnostic for A
+# gr_diagA <- seq(4,J,2) # values must be less than M+1
+# for(j in 1:length(gr_diagA)){
+#   it_J <- it %>%
+#     filter(it <= gr_diagA[j])
+# 
+#   it_J_i <- it_J %>% filter(sim_no == 1) %>%
+#     dplyr::select(A)
+#   it_list <- list(mcmc(it_J_i))
+#   for(i in 2:I){
+#     it_J_i <- it_J %>% filter(sim_no == i) %>% dplyr::select(A)
+#     it_list <- append(it_list, list(mcmc(it_J_i)))
+#   }
+#   gr <- gelman.diag(it_list)
+#   gr_diagA[j] <- gelman.diag(it_list)$psrf[1,1]
+# }
+# gr_diagA
+```
+```{r}
+# # Calculation of the Gelman Rubin diagnostic.
+# # Gelman Rubin diagnostic for mu
+# gr_diagMU <- seq(4,J,2) # values must be less than M+1
+# for(j in 1:length(gr_diagMU)){
+#   it_J <- it %>%
+#     filter(it <= gr_diagMU[j])
+# 
+#   it_J_i <- it_J %>% filter(sim_no == 1) %>%
+#     dplyr::select(mu)
+#   it_list <- list(mcmc(it_J_i))
+#   for(i in 2:I){
+#     it_J_i <- it_J %>% filter(sim_no == i) %>% dplyr::select(mu)
+#     it_list <- append(it_list, list(mcmc(it_J_i)))
+#   }
+#   gr <- gelman.diag(it_list)
+#   gr_diagMU[j] <- gelman.diag(it_list)$psrf[1,1]
+# }
+# gr_diagMU
+```
+```{r}
+# # Calculation of the Gelman Rubin diagnostic.
+# # Gelman Rubin diagnostic for mu
+# gr_diagTHETA1 <- seq(4,J,2) # values must be less than M+1
+# for(j in 1:length(gr_diagTHETA1)){
+#   it_J <- it %>%
+#     filter(it <= gr_diagTHETA1[j])
+# 
+#   it_J_i <- it_J %>% filter(sim_no == 1) %>%
+#     dplyr::select(theta1)
+#   it_list <- list(mcmc(it_J_i))
+#   for(i in 2:I){
+#     it_J_i <- it_J %>% filter(sim_no == i) %>% dplyr::select(theta1)
+#     it_list <- append(it_list, list(mcmc(it_J_i)))
+#   }
+#   gr <- gelman.diag(it_list)
+#   gr_diagTHETA1[j] <- gelman.diag(it_list)$psrf[1,1]
+# }
+# gr_diagTHETA1
+```
+
+```{r}
+# gr_diag <- data.frame(it = seq(4,J,2)/2, A = gr_diagA, mu = gr_diagMU, theta1 = gr_diagTHETA1)
+# save(gr_diag, file = "gr_diag_JamesStein.RData")
+```
+
+```{r}
+load('gr_diag_JamesStein.RData')
+```
+
+```{r}
+gr_diag %>% 
+  pivot_longer(cols = c('A','mu','theta1'), names_to = 'par', values_to = 'val') %>% 
+  ggplot(aes(x = it, y = val)) + facet_wrap(vars(par), scales = "free", labeller = labeller(par =
+    c("A" = "A",
+      "mu" = "mu",
+      "theta1" = "theta 1"))) +
+  geom_line(aes()) + labs(y="Shrink factor", x="Iteration") +
+  theme_bw() + theme(legend.position="none")
+```
+```{r}
+gr_diag
+```
